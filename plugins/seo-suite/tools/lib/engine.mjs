@@ -1,7 +1,7 @@
 // Kural koşum motoru ve skorlama.
 
 import {
-  SEVERITY_MULTIPLIER, CATEGORY_WEIGHT, CATEGORIES, makeFinding
+  SEVERITY_MULTIPLIER, CATEGORY_WEIGHT, CATEGORIES, SEO_CATEGORIES, makeFinding
 } from './rules.mjs';
 
 /** Nadir ama gerçek sorunların sıfıra yuvarlanmasını engelleyen taban. */
@@ -168,17 +168,21 @@ export function computeScores(findings, applicability, registry) {
     };
   }
 
-  const present = CATEGORIES.filter((c) => categories[c].score !== null);
+  // Genel skor yalnızca ağırlığı olan kategorilerden hesaplanır. `security`
+  // ağırlığı 0'dır: kendi skorunu alır ama SEO skorunu kaydırmaz.
+  const present = SEO_CATEGORIES.filter((c) => categories[c].score !== null && CATEGORY_WEIGHT[c] > 0);
   const weightSum = present.reduce((s, c) => s + CATEGORY_WEIGHT[c], 0);
   const overall = weightSum > 0
     ? Math.round(present.reduce((s, c) => s + CATEGORY_WEIGHT[c] * categories[c].score, 0) / weightSum)
     : null;
 
-  const hasCritical = findings.some((f) => f.severity === 'critical');
+  // Kritik hüküm yalnızca SEO kategorilerine bakar; güvenlik bulgusu ayrı raporlanır.
+  const hasCritical = findings.some((f) => f.severity === 'critical' && f.category !== 'security');
 
   return {
     overall,
     verdict: verdictFor(overall, hasCritical),
+    security: categories.security?.score ?? null,
     categories,
     model: { scoringVersion: SCORING_VERSION, rulesDigest: registry.digest }
   };

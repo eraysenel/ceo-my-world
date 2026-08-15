@@ -7,7 +7,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { registry } from '../rules/index.mjs';
 import {
-  CATEGORIES, SEVERITIES, CATEGORY_WEIGHT, SEVERITY_MULTIPLIER, NEEDS, defineRule
+  CATEGORIES, SEO_CATEGORIES, SEVERITIES, CATEGORY_WEIGHT, SEVERITY_MULTIPLIER, NEEDS, defineRule
 } from '../lib/rules.mjs';
 
 test('katalog: kural kimlikleri benzersiz', () => {
@@ -39,9 +39,17 @@ test('katalog: her kategoride en az bir kural var', () => {
   }
 });
 
-test('kategori ağırlıkları 1.0 toplar', () => {
-  const total = CATEGORIES.reduce((s, c) => s + CATEGORY_WEIGHT[c], 0);
+test('SEO kategori ağırlıkları 1.0 toplar', () => {
+  const total = SEO_CATEGORIES.reduce((s, c) => s + CATEGORY_WEIGHT[c], 0);
   assert.ok(Math.abs(total - 1) < 1e-9, `toplam ${total}`);
+});
+
+test('güvenlik kategorisi genel SEO skoruna katılmaz', () => {
+  // Güvenlik başlıklarının çoğu sıralama faktörü değildir; SEO skoruna
+  // katılırsa skor ölçtüğünü iddia ettiği şeyi ölçmez hâle gelir.
+  assert.equal(CATEGORY_WEIGHT.security, 0);
+  assert.ok(!SEO_CATEGORIES.includes('security'));
+  assert.ok(CATEGORIES.includes('security'));
 });
 
 test('info şiddeti skoru etkilemez', () => {

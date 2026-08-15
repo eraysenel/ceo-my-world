@@ -5,10 +5,28 @@
 // başında yazar; kategori skorlarının kaç kural üzerinden hesaplandığı
 // her satırda görünür.
 
-import { CATEGORY_LABEL, SEVERITY_LABEL, CATEGORIES } from './rules.mjs';
+import { CATEGORY_LABEL, SEVERITY_LABEL, CATEGORIES, SEO_CATEGORIES } from './rules.mjs';
 import { PRIORITY_LABEL, SCORING_VERSION } from './engine.mjs';
 
 const SEVERITY_ORDER = ['critical', 'error', 'warning', 'notice', 'info'];
+
+/**
+ * Denetlenen siteden gelen metni Markdown'a güvenle gömer.
+ *
+ * Bulgu mesajları taranan sayfanın başlığını, bağlantı metnini ve URL'lerini
+ * içerir — yani DENETLENEN SİTENİN KONTROLÜNDEKİ metni. Bu metin ham hâlde
+ * rapora yazılırsa, rapor bir Markdown→HTML dönüştürücüden geçirildiğinde
+ * (müşteriye PDF/HTML sunumu yaygın bir iş akışıdır) içindeki <script> çalışır.
+ * Raporun kendisi bir saldırı yüzeyine dönüşmemeli.
+ *
+ * `&lt;` Markdown'da düz `<` olarak görünür, yani okunabilirlik korunur.
+ */
+function mdSafe(value, { inTable = false } = {}) {
+  let s = String(value ?? '').replace(/[\r\n]+/g, ' ');
+  s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  if (inTable) s = s.replace(/\|/g, '\\|');
+  return s;
+}
 
 /** Makine okunur çıktı. Anahtar sırası sabittir ki iki denetimin git farkı okunabilsin. */
 export function buildAuditJson({ site, scores, findings, actions, applicability, registry, run }) {
@@ -118,7 +136,7 @@ export function buildMarkdown(audit, { site, findings, actions }) {
   const L = [];
   const s = audit.scores;
 
-  L.push(`# SEO Denetim Raporu — ${site.registrableDomain ?? site.origin}`);
+  L.push(`# SEO Denetim Raporu — ${mdSafe(site.registrableDomain ?? site.origin)}`);
   L.push('');
   L.push(`**Tarih:** ${audit.run.startedAt.slice(0, 10)}  `);
   L.push(`**Kapsam:** ${site.pages.size} sayfa · ${audit.run.mode === 'live' ? 'canlı tarama' : 'çevrimdışı analiz'}  `);
@@ -137,7 +155,7 @@ export function buildMarkdown(audit, { site, findings, actions }) {
   L.push('');
   L.push('| Kategori | Skor | Bulgu | Değerlendirilen kural |');
   L.push('|---|---:|---:|---|');
-  for (const cat of CATEGORIES) {
+  for (const cat of SEO_CATEGORIES) {
     const c = s.categories[cat];
     const score = c.score === null ? '—' : `${c.score}`;
     const coverage = c.evaluatedRules === 0 ? 'uygulanamadı'
@@ -145,6 +163,17 @@ export function buildMarkdown(audit, { site, findings, actions }) {
     L.push(`| ${CATEGORY_LABEL[cat]} | ${score} | ${c.findings} | ${coverage} |`);
   }
   L.push('');
+
+  const sec = s.categories.security;
+  if (sec) {
+    L.push(`**Güvenlik ve güven:** ${sec.score === null ? 'değerlendirilemedi (yanıt başlıkları gerekir)' : `${sec.score}/100`}`
+      + ` — ${sec.findings} bulgu, ${sec.evaluatedRules}/${sec.totalRules} kural.`);
+    L.push('');
+    L.push('> Güvenlik skoru **genel SEO skoruna dahil değildir**. CSP, X-Frame-Options ve'
+      + ' benzeri başlıklar sıralama faktörü değildir; ayrı ölçülür çünkü yanıt başlıkları'
+      + ' tarama sırasında zaten toplanıyor ve marka güveni açısından gerçek bir riski gösteriyor.');
+    L.push('');
+  }
 
   const sev = audit.summary.bySeverity;
   L.push(`**Bulgu dağılımı:** ${SEVERITY_ORDER
@@ -168,14 +197,14 @@ export function buildMarkdown(audit, { site, findings, actions }) {
       for (const a of items) {
         L.push(`#### \`${a.id}\` · ${SEVERITY_LABEL[a.severity]} · ${a.count} yerde`);
         L.push('');
-        L.push(a.message);
+        L.push(mdSafe(a.message));
         L.push('');
-        L.push(`**Ne yapmalı:** ${a.fix}`);
+        L.push(`**Ne yapmalı:** ${mdSafe(a.fix)}`);
         if (a.samplePages.length) {
           L.push('');
           L.push('<details><summary>Örnek sayfalar</summary>');
           L.push('');
-          for (const p of a.samplePages.slice(0, 5)) L.push(`- ${p}`);
+          for (const p of a.samplePages.slice(0, 5)) L.push(`- ${mdSafe(p)}`);
           L.push('');
           L.push('</details>');
         }
@@ -189,14 +218,14 @@ export function buildMarkdown(audit, { site, findings, actions }) {
   L.push('');
   L.push(`- **robots.txt:** ${site.robots.found ? 'var' : 'YOK'}`);
   if (site.robots.blockedAiAgents.length) {
-    L.push(`- **Engellenen AI tarayıcıları:** ${site.robots.blockedAiAgents.join(', ')}`);
+    L.push(`- **Engellenen AI tarayıcıları:** ${mdSafe(site.robots.blockedAiAgents.join(', '))}`);
   }
   const okSitemaps = site.sitemaps.filter((x) => x.ok);
   const sitemapUrlCount = site.sitemapUrls?.size ?? okSitemaps.reduce((n, x) => n + (x.urlCount ?? 0), 0);
   L.push(`- **Sitemap:** ${okSitemaps.length ? `${okSitemaps.length} adet, toplam ${sitemapUrlCount} URL` : 'YOK'}`);
   L.push(`- **llms.txt:** ${site.wellKnown.llmsTxt ? 'var' : 'yok'} *(Google özel işlemiyor — düşük öncelik)*`);
   L.push(`- **Render:** ${site.rendering === 'static' ? 'sunucu tarafı (iyi)' : 'istemci tarafı şüphesi'}`);
-  L.push(`- **Diller:** ${site.locales.length ? site.locales.join(', ') : 'beyan edilmemiş'}`);
+  L.push(`- **Diller:** ${site.locales.length ? mdSafe(site.locales.join(', ')) : 'beyan edilmemiş'}`);
   L.push('');
 
   // En sorunlu sayfalar
@@ -207,7 +236,7 @@ export function buildMarkdown(audit, { site, findings, actions }) {
     L.push('| Sayfa | Bulgu | Kritik/Hata |');
     L.push('|---|---:|---:|');
     for (const w of worst) {
-      L.push(`| ${w.url} | ${w.total} | ${w.severe} |`);
+      L.push(`| ${mdSafe(w.url, { inTable: true })} | ${w.total} | ${w.severe} |`);
     }
     L.push('');
   }
@@ -268,10 +297,17 @@ function worstPages(findings, limit) {
 
 export function buildHtml(audit, { site, actions }) {
   const s = audit.scores;
-  const rows = CATEGORIES.map((cat) => {
+  const rows = SEO_CATEGORIES.map((cat) => {
     const c = s.categories[cat];
     return `<tr><td>${esc(CATEGORY_LABEL[cat])}</td><td class="num">${c.score ?? '—'}</td><td class="num">${c.findings}</td><td class="num">${c.evaluatedRules}/${c.totalRules}</td></tr>`;
   }).join('\n');
+
+  const sec = s.categories.security;
+  const securityHtml = sec
+    ? `<h2>Güvenlik ve güven</h2>
+  <p><span class="score">${sec.score ?? '—'}</span><span class="verdict">/100 — ${sec.findings} bulgu, ${sec.evaluatedRules}/${sec.totalRules} kural</span></p>
+  <div class="warn">Güvenlik skoru <strong>genel SEO skoruna dahil değildir</strong>. CSP, X-Frame-Options ve benzeri başlıklar sıralama faktörü değildir; ayrı ölçülür çünkü yanıt başlıkları tarama sırasında zaten toplanıyor.</div>`
+    : '';
 
   const actionHtml = actions.map((a) => `
     <article class="action ${esc(a.severity)}">
@@ -328,6 +364,8 @@ export function buildHtml(audit, { site, actions }) {
     <thead><tr><th>Kategori</th><th class="num">Skor</th><th class="num">Bulgu</th><th class="num">Kural</th></tr></thead>
     <tbody>${rows}</tbody>
   </table>
+
+  ${securityHtml}
 
   <h2>Aksiyon planı</h2>
   ${actionHtml || '<p>Bulgu üretilmedi.</p>'}

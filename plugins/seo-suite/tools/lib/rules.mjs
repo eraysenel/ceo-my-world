@@ -7,8 +7,19 @@
 //   2. Çevrimdışı mod bir "veri var mı" sorusuna indirgenir, ayrı bir kod yolu olmaz.
 
 export const CATEGORIES = [
-  'technical', 'onpage', 'structured-data', 'performance', 'i18n', 'ai-search', 'links', 'media'
+  'technical', 'onpage', 'structured-data', 'performance', 'i18n', 'ai-search', 'links', 'media',
+  'security'
 ];
+
+/**
+ * Genel SEO skoruna katılan kategoriler.
+ *
+ * `security` bilinçli olarak DIŞARIDA. Güvenlik başlıklarının çoğu (CSP,
+ * X-Frame-Options, Permissions-Policy) sıralama faktörü değildir; bunları SEO
+ * skoruna katmak, skorun ölçtüğünü iddia ettiği şeyi ölçmemesi demek olurdu.
+ * Ayrı bir skor olarak raporlanır.
+ */
+export const SEO_CATEGORIES = CATEGORIES.filter((c) => c !== 'security');
 
 export const SEVERITIES = ['critical', 'error', 'warning', 'notice', 'info'];
 
@@ -17,7 +28,10 @@ export const SEVERITY_MULTIPLIER = {
   critical: 5, error: 3, warning: 1.5, notice: 0.5, info: 0
 };
 
-/** Kategori ağırlıkları (uygulanamayan kategoriler düşülüp yeniden normalize edilir). */
+/**
+ * Kategori ağırlıkları (uygulanamayan kategoriler düşülüp yeniden normalize edilir).
+ * Ağırlığı 0 olan kategori kendi skorunu alır ama genel skora katılmaz.
+ */
 export const CATEGORY_WEIGHT = {
   technical: 0.22,
   onpage: 0.20,
@@ -26,7 +40,8 @@ export const CATEGORY_WEIGHT = {
   'structured-data': 0.10,
   i18n: 0.08,
   'ai-search': 0.08,
-  media: 0.08
+  media: 0.08,
+  security: 0
 };
 
 export const CATEGORY_LABEL = {
@@ -37,7 +52,8 @@ export const CATEGORY_LABEL = {
   i18n: 'Dil ve uluslararasılaşma',
   'ai-search': 'AI aramada görünürlük',
   links: 'Bağlantılar',
-  media: 'Görsel ve medya'
+  media: 'Görsel ve medya',
+  security: 'Güvenlik ve güven'
 };
 
 export const SEVERITY_LABEL = {
