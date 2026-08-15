@@ -133,6 +133,35 @@ test('her iki temada da metin zeminden ayrışıyor', async (t) => {
   }
 });
 
+test('güvenlik skoru kapsamını gizlemiyor', async (t) => {
+  if (guard(t)) return;
+  // Gerçek bir koşuda ortaya çıktı: yanıt başlığı olmadan 11 güvenlik
+  // kuralının 10'u çalışmaz, kalan tek kuraldan gelen "100/100" ise
+  // başlıklar sağlammış gibi okunuyordu. Kapsam her zaman yazılmalı.
+  const { page } = await openPanel();
+  const html = '<!doctype html><html lang="tr"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width">'
+    + '<title>Yeterince uzun bir başlık buraya yazıldı</title>'
+    + '<script src="https://cdn.baska.test/a.js"><\/script></head>'
+    + '<body><main><h1>Baş</h1><p>içerik</p></main></body></html>';
+
+  await page.fill('#u1', 'https://ornek.test/a');
+  await page.fill('#h1', html);
+  await page.click('#run');
+  await page.waitForSelector('.sep-note');
+
+  // textContent satır sonlarını korur; şablon çok satırlı olduğu için
+  // eşleştirmeden önce boşluklar tekilleştirilir.
+  const notes = await page.$$eval('.sep-note',
+    (els) => els.map((e) => e.textContent.replace(/\s+/g, ' ').trim()));
+  const sec = notes.find((n) => n.includes('Güvenlik'));
+  assert.ok(sec, 'güvenlik satırı basılmalı');
+  assert.match(sec, /1\/11 kural/, 'kaç kuralın çalıştığı yazılmalı');
+  assert.match(sec, /güvenlik başlıklarınızın sağlam olduğu anlamına gelmez/,
+    'kısmi kapsamda açık uyarı olmalı');
+  await page.close();
+});
+
 test('sayfa yatay kaymıyor', async (t) => {
   if (guard(t)) return;
   const { page } = await openPanel();
