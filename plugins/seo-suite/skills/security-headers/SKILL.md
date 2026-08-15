@@ -40,52 +40,31 @@ Gerisi risk hijyenidir — değerlidir, ama SEO değildir.
 
 ## Uygulama sırası
 
-Hepsini aynı anda açmayın — CSP dışındakiler neredeyse risksiz, CSP ise siteyi kırabilir.
+Hepsini aynı anda açmayın. Risk sırasına göre ilerleyin; her aşama bir öncekinin kırılmadığı doğrulandıktan sonra gelir.
 
-**1. Adım — risksiz olanlar (tek satır, kırılma riski yok):**
+| Aşama | Ne | Risk |
+|---|---|---|
+| 1 | `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` | Yok denecek kadar az |
+| 2 | HSTS — önce kısa `max-age`, sonra uzat | Alt alan adlarını da kapsar; geri alması zor |
+| 3 | Çerçeveleme koruması (`X-Frame-Options`) | Sayfa bilinçli gömülüyorsa kırar |
+| 4 | CSP **report-only** + ihlal toplama | Yok — hiçbir şeyi engellemez |
+| 5 | CSP zorlayıcı | Yüksek — 4. aşama temizlenmeden geçilmez |
 
-```
-X-Content-Type-Options: nosniff
-Referrer-Policy: strict-origin-when-cross-origin
-Permissions-Policy: camera=(), microphone=(), geolocation=()
-```
+Üç nokta özellikle dikkat ister:
 
-**2. Adım — HSTS (dikkatli):**
+**HSTS'in geri alınması diğerlerinden farklıdır.** Tarayıcı başlığı bir kez gördüğünde, kuralı silseniz bile `max-age` dolana kadar o alan adına yalnızca HTTPS ile bağlanır. Geri almanın tek yolu `max-age=0` yayınlayıp beklemektir. `includeSubDomains` tüm alt alan adlarını kapsar; HTTPS sunmayan bir alt alan adı erişilemez hâle gelir. `preload` listesine girmek aylarca geri alınamaz.
 
-```
-Strict-Transport-Security: max-age=31536000; includeSubDomains
-```
+**Tek CSP başlığı kuralı.** Aşama 3'te `frame-ancestors` yerine `X-Frame-Options` kullanın. Sebep: Aşama 5'te tam CSP yazacaksınız; şimdi ayrı bir CSP başlığı eklerseniz, ikinci CSP geldiğinde **ikisi de uygulanır ve kısıtlar kesişir**. Teşhisi zor kırılmaların klasik kaynağı budur. `frame-ancestors` Aşama 5'te CSP'nin içine girer, `X-Frame-Options` o zaman kaldırılır.
 
-> `includeSubDomains` **tüm alt alan adlarını** kapsar. HTTPS sunmayan bir alt alan adınız varsa (eski bir test ortamı gibi) erişilemez hâle gelir. Önce kısa `max-age` ile deneyin, tüm alt alan adlarının HTTPS sunduğunu doğrulayın, sonra süreyi uzatın. `preload` listesine girmek geri alınması çok zor bir adımdır — acele etmeyin.
+**`'unsafe-inline'` ile başlayıp sonra kaldırma planı işlemez.** Pratikte hiç kaldırılmaz, çünkü kaldırıldığı anda site kırılır ve iş ertelenir. Sonuç: CSP tanımlı görünür ama betik enjeksiyonuna karşı koruma sağlamaz. Satır içi betikleri baştan nonce ile beyaz listeye alın; nonce her istekte farklı olmalı.
 
-**3. Adım — çerçeveleme koruması:**
-
-```
-Content-Security-Policy: frame-ancestors 'self'
-```
-
-Sayfanız bilinçli olarak başka sitelere gömülüyorsa (widget, gömülü oynatıcı) izinli alan adlarını listeleyin.
-
-**4. Adım — CSP (kademeli):**
-
-Doğrudan zorlayıcı CSP yayınlamak siteyi kırar. Doğru sıra:
-
-```
-# Önce yalnızca raporla — hiçbir şeyi engellemez
-Content-Security-Policy-Report-Only: default-src 'self'; report-uri /csp-rapor
-
-# İhlalleri topla, gerçek trafikte kırılan bir şey olmadığını doğrula
-# Sonra zorlayıcı moda geç
-Content-Security-Policy: default-src 'self'; script-src 'self' 'nonce-rastgele'
-```
-
-`'unsafe-inline'` ile başlayıp sonra kaldırmayı planlamak yaygın ama işe yaramayan bir yoldur — pratikte hiç kaldırılmaz. Satır içi betikleri baştan nonce/hash ile beyaz listeye alın.
+**Adım adım uygulama, doğrulama ve geri alma:** [`references/cloudflare-uygulama.md`](references/cloudflare-uygulama.md) — Cloudflare panelinde tam ekran yolları, yapıştırılacak değerler, her aşama için `curl` doğrulaması ve geri alma adımı. Ayrıca hangi kontrolün Cloudflare'dan, hangisinin uygulama kodundan yapılması gerektiğini ayıran tablo.
 
 ## Cloudflare arkasındaysanız
 
-Bu başlıkların çoğu Cloudflare panelinden veya bir Transform Rule ile tek yerden eklenebilir; köken sunucuya dokunmaya gerek yoktur. HSTS ayrı bir bölümde (SSL/TLS → Edge Certificates) yer alır.
+Başlıkların çoğu tek bir Transform Rule ile eklenir; köken sunucuya dokunmaya gerek yoktur. HSTS ayrı bir ekrandadır (SSL/TLS → Edge Certificates). Çerez bayrakları, SRI ve CSP nonce'u ise Cloudflare'dan yapılamaz — uygulama kodunda yapılır.
 
-Ayrıca: Cloudflare bot koruması meşru denetim araçlarını ve bazı arama tarayıcılarını da bloklayabilir. Denetimde 403 alıyorsanız bu ayarı kontrol edin — güvenlik ayarı SEO'yu kırabilir.
+**Güvenlik ayarı SEO'yu kırabilir:** Cloudflare bot koruması (`Security → Bots`) meşru denetim araçlarını ve bazı arama tarayıcılarını da bloklayabilir. Denetimde 403 alıyorsanız ilk bakılacak yer burasıdır.
 
 ## Ölçüm
 
