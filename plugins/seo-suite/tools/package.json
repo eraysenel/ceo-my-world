@@ -1,0 +1,21 @@
+{
+  "name": "seo-audit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Canlı ve çevrimdışı çalışabilen, Türkçe raporlayan SEO denetim aracı",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "bin": {
+    "seo-audit": "./seo-audit.mjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "audit": "node ./seo-audit.mjs"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  }
+}

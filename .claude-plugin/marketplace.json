@@ -1,0 +1,32 @@
+{
+  "name": "ceo-my-world",
+  "description": "Türkçe SEO denetim ve optimizasyon eklentileri",
+  "owner": {
+    "name": "eraysenel",
+    "url": "https://github.com/eraysenel"
+  },
+  "plugins": [
+    {
+      "name": "seo-suite",
+      "source": "./plugins/seo-suite",
+      "displayName": "SEO Suite",
+      "description": "Türkçe SEO denetim takımı: 11 skill + çalıştırılabilir tarayıcı/denetleyici. Teknik SEO, on-page, structured data, Core Web Vitals, hreflang, yerel SEO ve AI aramada görünürlük.",
+      "version": "0.1.0",
+      "author": {
+        "name": "eraysenel"
+      },
+      "homepage": "https://github.com/eraysenel/ceo-my-world#readme",
+      "repository": "https://github.com/eraysenel/ceo-my-world",
+      "license": "MIT",
+      "category": "seo",
+      "keywords": [
+        "seo",
+        "turkce",
+        "core-web-vitals",
+        "schema-org",
+        "hreflang",
+        "audit"
+      ]
+    }
+  ]
+}
