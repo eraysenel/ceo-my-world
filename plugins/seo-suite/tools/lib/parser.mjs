@@ -420,6 +420,7 @@ function parsePerf($, pageUrl, html) {
 
   const pageHost = hostOf(pageUrl);
   const thirdPartyOrigins = new Set();
+  const thirdPartyScripts = [];
   const insecureResources = [];
   $('script[src], link[href], img[src], iframe[src], source[src], audio[src], video[src]').each((_, el) => {
     const $el = $(el);
@@ -429,7 +430,10 @@ function parsePerf($, pageUrl, html) {
     if (abs.startsWith('http://')) insecureResources.push({ tag: el.tagName, url: abs });
     if (el.tagName === 'script') {
       const h = hostOf(abs);
-      if (h && h !== pageHost) thirdPartyOrigins.add(h);
+      if (h && h !== pageHost) {
+        thirdPartyOrigins.add(h);
+        thirdPartyScripts.push({ src: abs, host: h, integrity: $el.attr('integrity') ?? null });
+      }
     }
   });
 
@@ -463,6 +467,7 @@ function parsePerf($, pageUrl, html) {
     preconnects,
     insecureResources,
     thirdPartyOrigins: [...thirdPartyOrigins],
+    thirdPartyScripts,
     inlineStyleBytes,
     scriptBytes,
     fontLinks,

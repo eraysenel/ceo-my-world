@@ -11,7 +11,7 @@ import { registry } from './rules/index.mjs';
 import { runRules, computeScores, prioritize } from './lib/engine.mjs';
 import { buildAuditJson, buildMarkdown, buildHtml } from './lib/report.mjs';
 import { DEFAULT_USER_AGENT } from './lib/http.mjs';
-import { CATEGORY_LABEL, CATEGORIES, SEVERITY_LABEL } from './lib/rules.mjs';
+import { CATEGORY_LABEL, SEO_CATEGORIES, SEVERITY_LABEL } from './lib/rules.mjs';
 
 const OPTIONS = {
   'input-dir': { type: 'string' },
@@ -240,11 +240,17 @@ function printSummary(audit, site, actions, written, quiet) {
   lines.push(`  ${site.registrableDomain ?? site.origin} — ${site.pages.size} sayfa`);
   lines.push(`  Genel skor: ${s.overall ?? '—'}/100 (${s.verdict})`);
   lines.push('');
-  for (const cat of CATEGORIES) {
+  for (const cat of SEO_CATEGORIES) {
     const c = s.categories[cat];
     if (c.score === null) continue;
     const bar = '█'.repeat(Math.round(c.score / 10)).padEnd(10, '·');
     lines.push(`  ${CATEGORY_LABEL[cat].padEnd(28)} ${bar} ${String(c.score).padStart(3)}  (${c.findings} bulgu)`);
+  }
+  const sec = s.categories.security;
+  if (sec && sec.score !== null) {
+    lines.push('');
+    const bar = '█'.repeat(Math.round(sec.score / 10)).padEnd(10, '·');
+    lines.push(`  ${'Güvenlik (SEO skoruna dahil değil)'.padEnd(28)} ${bar} ${String(sec.score).padStart(3)}  (${sec.findings} bulgu)`);
   }
   lines.push('');
   const sev = audit.summary.bySeverity;

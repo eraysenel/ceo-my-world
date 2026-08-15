@@ -1,6 +1,6 @@
 # SEO Suite
 
-Türkçe web siteleri için **Claude Code SEO denetim takımı**: 11 skill + çalıştırılabilir bir tarayıcı/denetleyici.
+Türkçe web siteleri için **Claude Code SEO denetim takımı**: 12 skill + 107 kurallı çalıştırılabilir bir tarayıcı/denetleyici.
 
 Bu depo aynı zamanda bir **Claude Code marketplace**'idir — tek komutla kurulur, `git pull` ile güncellenir.
 
@@ -61,6 +61,7 @@ Claude Code içinde:
 | `ai-search` | AI Overviews'ta alıntılanma, AI tarayıcı erişimi, SSR, `llms.txt` gerçeği |
 | `content-strategy` | Arama niyeti, topical authority, içerik brief'i, Türkçe anahtar kelime nüansları |
 | `local-seo` | Google Business Profile, NAP tutarlılığı, Türkiye yerel sinyalleri |
+| `security-headers` | CSP, HSTS, çerçeveleme koruması, çerez bayrakları, SRI — MDN Observatory tarzı |
 | `seo-reporting` | Skorlama, etki×efor önceliklendirme, rapor formatı, KPI takibi |
 | `modern-web-design` | Performans öncelikli arayüz, semantik HTML, erişilebilirlik |
 
@@ -115,6 +116,10 @@ Her fazın sonunda `reports/<alan-adi>/` altına dosya yazılır; hiçbir faz "t
 **Skor sistemik sağlığı ölçer, aciliyeti değil.** Tek bir bozuk sayfa 300 sayfalık bir sitenin skorunu çökertmez — ceza, etkilenen sayfa *oranına* göre hesaplanır. Buna karşılık her `kritik` bulgu, skordan bağımsız olarak aksiyon listesinin en üstüne sabitlenir.
 
 **Politika kararını hata sayma.** `GPTBot`'u engellemek bilinçli bir tercih olabilir. Araç bunu bildirir ama varsayılan olarak skordan düşmez.
+
+**Ölçmediğin kategoriye sıfır verme.** Çevrimdışı modda yanıt başlıkları olmadığı için güvenlik kuralları çalışmaz; rapor o kategoriye 0 değil "değerlendirilemedi" yazar. Ölçülmemiş olmak, kötü olmakla aynı şey değildir.
+
+**Güvenlik ayrı ölçülür.** CSP, HSTS ve benzeri başlıklar sıralama faktörü değildir; güvenlik skoru hesaplanır ama **genel SEO skoruna katılmaz**. Karıştırmak, SEO skorunun ölçtüğünü iddia ettiği şeyi ölçmemesi olurdu.
 
 **Türkçe birinci sınıf vatandaştır.** `İ`/`ı` büyük-küçük harf dönüşümü, `Intl.Collator('tr')` ile sıralama, URL'de yüzde kodlaması, mojibake (`Ã¼`, `ÅŸ`, `Ä±`) tespiti ve başlık genişliğinin karakter yerine **piksel** ile ölçülmesi araca gömülüdür.
 
