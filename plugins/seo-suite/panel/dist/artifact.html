@@ -113,6 +113,27 @@ h1 { font-size: var(--step-3); font-weight: 660; letter-spacing: -.022em; margin
   border-radius: 10px; box-shadow: var(--shadow);
 }
 
+/* ---- Yardımcılar ----------------------------------------------------
+   Panelde hiçbir `style="…"` özniteliği yok, çünkü CSP özetleri satır içi
+   biçim özniteliklerine uygulanmaz: bir tanesi bile kalsa yayında politikayı
+   'unsafe-inline' ile gevşetmek gerekirdi ve kendi csp-unsafe kuralımıza
+   takılırdık. Renk kararları burada, veri özniteliğine bağlı. */
+.muted-note { color: var(--muted); }
+.strong-ink { color: var(--ink); }
+.strong-warn { color: var(--warning); }
+.grow { flex: 1; }
+
+[data-band="na"]   { --band: var(--muted); }
+[data-band="good"] { --band: var(--good); }
+[data-band="warn"] { --band: var(--warning); }
+[data-band="bad"]  { --band: var(--critical); }
+
+[data-verdict="good"]     { --tone: var(--good); }
+[data-verdict="warning"]  { --tone: var(--warning); }
+[data-verdict="error"]    { --tone: var(--error); }
+[data-verdict="critical"] { --tone: var(--critical); }
+[data-verdict="notice"]   { --tone: var(--notice); }
+
 /* ---- Sayfayı verme yolları ---- */
 .intake { padding: 1.25rem 1.4rem; margin-bottom: 1.5rem; }
 .intake h2 { font-size: var(--step-1); font-weight: 620; margin: 0 0 1rem; letter-spacing: -.01em; }
@@ -255,11 +276,15 @@ button.link:hover { color: var(--critical); }
 .score-num {
   font: 660 var(--step-4)/1 var(--mono); letter-spacing: -.03em;
   font-variant-numeric: tabular-nums;
+  color: var(--band, var(--ink));
 }
 .score-den { font: 500 var(--step-1)/1 var(--mono); color: var(--muted); }
 .verdict {
   display: inline-block; font: 600 .8125rem/1 var(--sans);
   padding: .4rem .7rem; border-radius: 99px; letter-spacing: .01em;
+  background: var(--surface-sunk);
+  color: var(--tone, var(--notice));
+  border: 1px solid var(--tone, var(--notice));
 }
 .summary-meta { color: var(--muted); font-size: .875rem; display: flex; flex-direction: column; gap: .35rem; }
 .summary-meta b { color: var(--ink); font-weight: 600; font-family: var(--mono); font-variant-numeric: tabular-nums; }
@@ -276,7 +301,7 @@ h2.section { font-size: var(--step-2); font-weight: 640; letter-spacing: -.015em
 .cat-name { font-size: .875rem; color: var(--ink-soft); }
 .cat-name small { display: block; color: var(--muted); font: 400 .75rem/1.4 var(--mono); font-variant-numeric: tabular-nums; }
 .bar { height: 7px; background: var(--surface-sunk); border-radius: 99px; overflow: hidden; }
-.bar > i { display: block; height: 100%; border-radius: 99px; }
+.bar > i { display: block; height: 100%; width: 0; border-radius: 99px; background: var(--band, var(--muted)); }
 .cat-score { font: 600 .9375rem/1 var(--mono); text-align: right; font-variant-numeric: tabular-nums; }
 .cat-row.na .cat-score, .cat-row.na .cat-name { color: var(--muted); }
 
@@ -457,7 +482,7 @@ code { font: 400 .875em/1 var(--mono); background: var(--surface-sunk); padding:
   <div class="actions-bar">
     <button type="button" id="addPage">+ Sayfa ekle</button>
     <button type="button" class="primary" id="run">Denetle</button>
-    <span id="inputHint" class="cat-name" style="color:var(--muted)"></span>
+    <span id="inputHint" class="cat-name muted-note"></span>
   </div>
 
   <div id="error"></div>
@@ -509,7 +534,7 @@ var SeoAudit=(()=>{var Ls=Object.create;var jt=Object.defineProperty;var Os=Obje
     card.innerHTML = `
       <div class="page-head">
         <span class="page-n">${n}</span>
-        <div style="flex:1">
+        <div class="grow">
           <label for="u${n}">Sayfanın adresi</label>
           <input type="url" id="u${n}" placeholder="https://ornek.com/hizmetler" value="${esc(url)}">
         </div>
@@ -767,17 +792,16 @@ alert('Sayfa kopyalandi. SEO paneline donup "Panodan al" dugmesine basin.');
   });
 
   // --- Sonuç ---------------------------------------------------------------
-  const scoreColor = (s) =>
-    s === null ? 'var(--muted)' : s >= 75 ? 'var(--good)' : s >= 50 ? 'var(--warning)' : 'var(--critical)';
+  // Renk değil bant döndürülür; hangi rengin karşılık geldiğine CSS karar verir.
+  // Böylece işaretlemede tek bir `style="…"` kalmıyor ve katı CSP altında da
+  // çalışıyoruz — özetler satır içi biçim özniteliklerini kapsamaz.
+  const scoreBand = (s) =>
+    s === null ? 'na' : s >= 75 ? 'good' : s >= 50 ? 'warn' : 'bad';
 
-  const verdictStyle = (v) => {
-    const map = {
-      'çok iyi': 'good', 'iyi': 'good', 'orta': 'warning',
-      'zayıf': 'error', 'kritik': 'critical', 'değerlendirilemedi': 'notice'
-    };
-    const t = map[v] ?? 'notice';
-    return `background:var(--surface-sunk);color:var(--${t});border:1px solid var(--${t})`;
-  };
+  const verdictTone = (v) => ({
+    'çok iyi': 'good', 'iyi': 'good', 'orta': 'warning',
+    'zayıf': 'error', 'kritik': 'critical', 'değerlendirilemedi': 'notice'
+  }[v] ?? 'notice');
 
   function render(res) {
     const { scores, actions, meta, site } = res;
@@ -788,10 +812,10 @@ alert('Sayfa kopyalandi. SEO paneline donup "Panodan al" dugmesine basin.');
     out.push(`<div class="card summary">
       <div>
         <div class="score-block">
-          <span class="score-num" style="color:${scoreColor(scores.overall)}">${scores.overall ?? '—'}</span>
+          <span class="score-num" data-band="${scoreBand(scores.overall)}">${scores.overall ?? '—'}</span>
           <span class="score-den">/100</span>
         </div>
-        <span class="verdict" style="${verdictStyle(scores.verdict)}">${esc(scores.verdict)}</span>
+        <span class="verdict" data-verdict="${verdictTone(scores.verdict)}">${esc(scores.verdict)}</span>
       </div>
       <div class="summary-meta">
         <span><b>${meta.pageCount}</b> sayfa incelendi</span>
@@ -833,12 +857,12 @@ alert('Sayfa kopyalandi. SEO paneline donup "Panodan al" dugmesine basin.');
             ? 'uygulanamadı'
             : `${c.evaluatedRules}/${c.totalRules} kural · ${c.findings} bulgu${partial ? ' · kısmi' : ''}`}</small>
         </div>
-        <div class="bar${partial ? ' partial' : ''}"><i style="width:${na ? 0 : c.score}%;background:${scoreColor(c.score)}"></i></div>
+        <div class="bar${partial ? ' partial' : ''}"><i data-band="${scoreBand(c.score)}" data-w="${na ? 0 : c.score}"></i></div>
         <div class="cat-score${partial ? ' partial' : ''}">${na ? '—' : c.score}</div>
       </div>`);
     }
     if (partialCount) {
-      out.push(`<div class="sep-note"><strong style="color:var(--ink)">${partialCount} kategori kısmi kapsamda.</strong>
+      out.push(`<div class="sep-note"><strong class="strong-ink">${partialCount} kategori kısmi kapsamda.</strong>
         Çizgili bar, o kategorideki kuralların yarıdan azının çalıştığını gösterir — skor yalnızca
         çalışabilenler üzerinden hesaplandı. Yüksek görünmesi sorun olmadığı anlamına gelmez.</div>`);
     }
@@ -852,10 +876,10 @@ alert('Sayfa kopyalandi. SEO paneline donup "Panodan al" dugmesine basin.');
         ? 'değerlendirilemedi (yanıt başlıkları gerekir)'
         : `${sec.score}/100${secPartial ? '~' : ''} · ${sec.evaluatedRules}/${sec.totalRules} kural`;
       out.push(`<div class="sep-note">
-        <strong style="color:var(--ink)">Güvenlik ve güven:</strong> ${secScore} —
+        <strong class="strong-ink">Güvenlik ve güven:</strong> ${secScore} —
         genel SEO skoruna <em>dahil değildir</em>. CSP, HSTS ve benzeri başlıklar sıralama faktörü değildir;
         ayrı ölçülür.${secPartial
-          ? ` <strong style="color:var(--warning)">Bu skor ${sec.evaluatedRules} kuraldan geliyor;
+          ? ` <strong class="strong-warn">Bu skor ${sec.evaluatedRules} kuraldan geliyor;
               başlık gerektiren ${sec.totalRules - sec.evaluatedRules} kural çalışmadı — güvenlik
               başlıklarınızın sağlam olduğu anlamına gelmez.</strong>`
           : ''}</div>`);
@@ -895,10 +919,17 @@ alert('Sayfa kopyalandi. SEO paneline donup "Panodan al" dugmesine basin.');
 
     out.push(`<div class="actions-bar">
       <button type="button" id="copyReport">Raporu Markdown olarak kopyala</button>
-      <span class="cat-name" id="copyState" style="color:var(--muted)"></span>
+      <span class="cat-name muted-note" id="copyState"></span>
     </div>`);
 
     $('results').innerHTML = out.join('');
+
+    // Bar genişliği tek gerçek sayısal biçim değeri. CSSOM üzerinden yazmak
+    // CSP'ye takılmaz; takılan yalnızca işaretlemeden gelen satır içi biçimdir.
+    for (const el of $('results').querySelectorAll('.bar > i[data-w]')) {
+      el.style.setProperty('width', `${el.dataset.w}%`);
+    }
+
     $('results').hidden = false;
     $('copyReport').addEventListener('click', () => copyReport(res));
   }

@@ -1,0 +1,11 @@
+# Bu dosya derleme sırasında üretilir — elle düzenlemeyin.
+# Kaynağı: tools/build-panel.mjs. CSP özetleri satır içi bloklardan hesaplanır.
+
+/*
+  Content-Security-Policy: default-src 'none'; script-src 'sha256-BUHDOFuERqdrkdMdalOaAzHkp2nXXnTFv0I8g0tlJc0=' 'sha256-09Lo5P51uQM2u8kQ0d6n8MsFfpXBqYblHkO5DVM4daY='; style-src 'sha256-PJ3If4dypoYQLEFNGcj2mJzbbProLZCs3U8lVa15yV0='; img-src 'self' data:; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), camera=(), microphone=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin

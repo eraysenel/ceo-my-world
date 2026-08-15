@@ -6,6 +6,8 @@ Sayfayı panele verin, denetim tarayıcınızda çalışsın. Sunucu yok, kurulu
 
 **Tek dosya:** `dist/index.html`'i indirip çift tıklayın. Başka hiçbir şey gerekmez — kural motoru dosyanın içine gömülüdür.
 
+**Kendi adresinde:** [`netlify-yayinlama.md`](netlify-yayinlama.md) — depo kökündeki `netlify.toml` hazır, derleme komutu yok. Yayınlamanın tek somut kazancı "Sayfayı Yakala"nın tek tık kipine geçmesi: panel kendi `https` adresinde en üst seviyede çalıştığında yer imi geri dönebileceği bir adres bulur.
+
 Sayfayı vermenin üç yolu var; hepsi aynı yere bağlanır. İlk ikisi hiçbir kurulum istemez.
 
 ### 1. "Dosya seç" ya da sürükle-bırak — en kolayı
