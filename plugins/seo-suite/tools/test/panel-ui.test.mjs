@@ -9,6 +9,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
+import { createServer } from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -33,12 +34,36 @@ async function findChromium() {
   try { return chromium.executablePath(); } catch { return null; }
 }
 
+// Yer iminin hangi kipte üretildiği protokole ve çerçeveye bağlı, bu yüzden
+// paneli `file://` dışında gerçek bir http adresinden de servis etmek gerekiyor.
+let server;
+let origin;
+
 before(async () => {
   const exe = await findChromium();
-  if (!exe) return;
-  try { browser = await chromium.launch({ executablePath: exe }); } catch { browser = null; }
+  if (exe) {
+    try { browser = await chromium.launch({ executablePath: exe }); } catch { browser = null; }
+  }
+
+  const html = await readFile(PANEL, 'utf8');
+  server = createServer((req, res) => {
+    if (req.url.startsWith('/frame')) {
+      res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+      res.end('<!doctype html><meta charset="utf-8"><title>gomulu</title>'
+        + '<iframe src="/index.html" width="900" height="700" style="border:0"></iframe>');
+      return;
+    }
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+    res.end(html);
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  origin = `http://127.0.0.1:${server.address().port}`;
 });
-after(async () => { await browser?.close(); });
+
+after(async () => {
+  await browser?.close();
+  await new Promise((resolve) => server?.close(resolve));
+});
 
 function guard(t) {
   if (!browser) { t.skip('Chromium bulunamadı — panel arayüzü doğrulanamadı'); return true; }
@@ -223,22 +248,77 @@ test('dosya seçmek kartları dolduruyor, adres kaynaktan okunuyor', async (t) =
   await page.close();
 });
 
-test('yer imi dizesi geçerli JavaScript ve panel adresini taşıyor', async (t) => {
+test('gerçek adreste yer imi geçerli JavaScript ve panel adresini taşıyor', async (t) => {
   if (guard(t)) return;
-  const { page } = await openPanel();
+  const page = await browser.newPage();
+  await page.goto(`${origin}/index.html`);
   const href = await page.getAttribute('#bmk', 'href');
   assert.ok(href.startsWith('javascript:'), `javascript: URL olmalı: ${href.slice(0, 40)}`);
 
   // Tarayıcının URL'yi çözdüğü gibi çözüp ayrıştırılabilirliğini doğrula.
   const body = decodeURIComponent(href.slice('javascript:'.length));
   assert.ok(!body.includes('#'), 'ham # fragman sayılıp kodu keser');
-  assert.match(body, /CompressionStream/);
-  assert.match(body, /file:\/\/.*index\.html/, 'panel adresi gömülü olmalı');
+  assert.match(body, /CompressionStream/, 'gerçek adreste tek-tık kipi üretilmeli');
+  assert.ok(body.includes(`${origin}/index.html`), 'panel adresi gömülü olmalı');
   await page.evaluate((src) => { new Function(src); }, body); // ayrıştırılamazsa atar
 
-  // Panelde tıklanırsa çalışmaz; kullanıcı yönlendirilir.
+  // Panelde tıklanırsa çalışmaz; kullanıcı yönlendirilir ve öğretici açılır.
   await page.click('#bmk');
-  assert.match(await page.textContent('#intakeStatus'), /yer imi çubuğuna sürükleyin/);
+  assert.match(await page.textContent('#intakeStatus'), /yer imi çubuğuna sürüklenir/);
+  assert.equal(await page.evaluate(() => document.getElementById('bmkHow').open), true,
+    'tıklayan kişiye kurulum adımları gösterilmeli');
+  await page.close();
+});
+
+test('kurulum öğreticisi adımları ve çizimi gösteriyor', async (t) => {
+  if (guard(t)) return;
+  // Kullanıcı "ne yapacağımı anlamadım" dedi: yer imi çubuğunun ne olduğu ve
+  // sürüklemenin nasıl yapılacağı panelin içinde yazmalı, dışarıda değil.
+  const { page, errors } = await openPanel();
+  assert.equal(await page.isVisible('.steps'), true, 'dosya yolu adımları en başta görünmeli');
+
+  await page.click('#bmkHow > summary');
+  const how = (await page.textContent('#bmkHow')).replace(/\s+/g, ' ');
+  assert.match(how, /Ctrl\+Shift\+B/, 'yer imi çubuğunun nasıl açılacağı yazmalı');
+  assert.match(how, /basılı tutun/, 'sürüklemenin nasıl yapıldığı yazmalı');
+  assert.equal(await page.isVisible('.bmk-fig svg'), true, 'sürükleme çizimi görünmeli');
+  assert.ok((await page.getAttribute('.bmk-fig svg', 'aria-label')).length > 20,
+    'çizimin metin karşılığı olmalı');
+
+  assert.deepEqual(errors, [], 'konsolda hata olmamalı');
+  await page.close();
+});
+
+test('sürükleme tutmayanlar için kod kopyalanabiliyor', async (t) => {
+  if (guard(t)) return;
+  const page = await browser.newPage({ permissions: ['clipboard-read', 'clipboard-write'] });
+  await page.goto(`file://${PANEL}`);
+  await page.click('#bmkHow > summary');
+  await page.click('#copyBmk');
+
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  assert.ok(copied.startsWith('javascript:'), `panoya yer imi kodu yazılmalı: ${copied.slice(0, 30)}`);
+  assert.match(await page.textContent('#intakeStatus'), /Ctrl\+D/);
+  await page.close();
+});
+
+test('panel bir çerçeve içindeyse yer imi pano kipine düşüyor', async (t) => {
+  if (guard(t)) return;
+  // Claude'un penceresi paneli iframe içinde çalıştırır; orada `location.href`
+  // sandbox adresidir ve yer imi o adrese dönemez. Panele dönmeye çalışmak
+  // yerine sayfayı panoya kopyalamalı — yoksa yer imi hiçbir işe yaramaz.
+  const page = await browser.newPage();
+  await page.goto(`${origin}/frame`);
+  const frame = page.frames().find((f) => f !== page.mainFrame());
+  await frame.waitForSelector('#bmk');
+
+  const href = await frame.getAttribute('#bmk', 'href');
+  const body = decodeURIComponent(href.slice('javascript:'.length));
+  assert.match(body, /clipboard\.writeText/, 'çerçeve içinde pano kipi üretilmeli');
+  assert.ok(!body.includes('seo='), 'panele dönüş adresi gömülmemeli');
+
+  assert.match((await frame.textContent('#intakeStatus')).replace(/\s+/g, ' '),
+    /panoya kopyalar/, 'kullanıcıya ne olacağı baştan söylenmeli');
   await page.close();
 });
 

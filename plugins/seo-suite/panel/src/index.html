@@ -124,8 +124,16 @@ h1 { font-size: var(--step-3); font-weight: 660; letter-spacing: -.022em; margin
 .intake-row:first-of-type { border-top: none; padding-top: 0; }
 @media (max-width: 34rem) { .intake-row { grid-template-columns: 1fr; } }
 .intake-desc { margin: 0; color: var(--ink-soft); font-size: .875rem; line-height: 1.6; }
+.intake-desc > * { margin: 0 0 .5rem; }
+.intake-desc > *:last-child { margin-bottom: 0; }
 .intake-desc strong { color: var(--ink); }
+.intake-desc .hint { font-size: .8125rem; color: var(--muted); }
 .intake-row > button { width: 100%; }
+
+/* Numaralı adımlar — anlatmak yerine sırayla göstermek için. */
+.steps { padding-left: 1.35rem; display: flex; flex-direction: column; gap: .25rem; }
+.steps li { padding-left: .1rem; }
+.steps li::marker { color: var(--muted); font-variant-numeric: tabular-nums; }
 
 /* Yer imi bağlantısı: düğme gibi görünür ama <a>'dır — sürüklenebilmesi gerekir. */
 .bmk {
@@ -136,6 +144,33 @@ h1 { font-size: var(--step-3); font-weight: 660; letter-spacing: -.022em; margin
 }
 .bmk:hover { filter: brightness(1.08); }
 .bmk:active { cursor: grabbing; }
+
+/* Kurulum öğreticisi */
+.bmk-how { margin-top: .6rem; border-top: 1px solid var(--line); padding-top: .6rem; }
+.bmk-how > summary {
+  cursor: pointer; font-weight: 560; color: var(--accent);
+  list-style-position: outside; padding: .15rem 0;
+}
+.bmk-how > summary:hover { text-decoration: underline; text-underline-offset: 3px; }
+.bmk-how > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.bmk-how > *:not(summary) { margin: .6rem 0 0; }
+.bmk-how .step0 { color: var(--ink-soft); }
+button.link.inline { display: inline; font-size: inherit; color: var(--accent); padding: 0; }
+button.link.inline:hover { color: var(--accent); }
+
+/* Sürükleme çizimi: renkler token'lardan gelir, iki temada da okunur. */
+.bmk-fig { margin: .8rem 0 0; }
+.bmk-fig svg { display: block; max-width: 24rem; }
+.bmk-fig figcaption { margin-top: .35rem; font-size: .75rem; color: var(--muted); }
+.fig-frame { fill: var(--surface-sunk); stroke: var(--line-strong); stroke-width: 1.5; }
+.fig-dot { fill: var(--line-strong); }
+.fig-bar { fill: var(--surface); stroke: var(--line); stroke-width: 1; }
+.fig-drop { fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 3.5; }
+.fig-label { font: 500 7.5px var(--sans); fill: var(--muted); }
+.fig-chip rect { fill: var(--accent); }
+.fig-chip text { font: 600 9px var(--sans); fill: var(--accent-ink); }
+.fig-arrow { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-dasharray: 6 4; }
+.fig-arrowhead { fill: var(--accent); }
 
 .intake-note {
   margin: 1rem 0 0; padding: .8rem 1rem; border-radius: 7px;
@@ -151,7 +186,7 @@ h1 { font-size: var(--step-3); font-weight: 660; letter-spacing: -.022em; margin
 .drop-hint {
   position: fixed; inset: 0; z-index: 40;
   display: flex; align-items: center; justify-content: center;
-  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  background: color-mix(in srgb, var(--ground) 82%, transparent);
   border: 3px dashed var(--accent); border-radius: 12px;
   font: 620 var(--step-2)/1.3 var(--sans); color: var(--accent);
   pointer-events: none; text-align: center; padding: 2rem;
@@ -289,11 +324,14 @@ h2.section { font-size: var(--step-2); font-weight: 640; letter-spacing: -.015em
 .f-msg { margin: 0 0 .5rem; color: var(--ink); }
 .f-fix { margin: 0; color: var(--ink-soft); font-size: .9375rem; }
 .f-fix b { color: var(--ink); font-weight: 600; }
-details { margin-top: .6rem; }
-summary { cursor: pointer; font-size: .8125rem; color: var(--muted); }
-summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-details ul { margin: .5rem 0 0; padding-left: 1.1rem; }
-details li { font: 400 .8125rem/1.7 var(--mono); color: var(--muted); word-break: break-all; }
+/* Bulgu kartındaki "etkilenen sayfalar" listesi. Seçiciler .finding altına
+   bağlı: yalın `details li` giriş bölümündeki anlatım listesini de yakalıyordu
+   ve adımları tek boşluklu yazıyla, kelime ortasından bölerek basıyordu. */
+.finding details { margin-top: .6rem; }
+.finding summary { cursor: pointer; font-size: .8125rem; color: var(--muted); }
+.finding summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.finding details ul { margin: .5rem 0 0; padding-left: 1.1rem; }
+.finding details li { font: 400 .8125rem/1.7 var(--mono); color: var(--muted); word-break: break-all; }
 
 .empty { color: var(--muted); padding: 1.2rem 1.4rem; }
 
@@ -322,28 +360,85 @@ code { font: 400 .875em/1 var(--mono); background: var(--surface-sunk); padding:
     <h2>Sayfayı nasıl vereceksiniz</h2>
 
     <div class="intake-row">
-      <a id="bmk" class="bmk" draggable="true" href="#">⚡ Sayfayı Yakala</a>
-      <p class="intake-desc">
-        <strong>Tek tık — en kolayı.</strong> Bu düğmeyi tarayıcınızın <em>yer imi çubuğuna sürükleyin</em>
-        (bir kez). Sonra kendi sitenizdeyken ona tıklamanız yeterli: sayfa yakalanır, panel açılır,
-        denetim kendiliğinden başlar.
-      </p>
-    </div>
-
-    <div class="intake-row">
-      <button type="button" id="pickFile">📁 Dosya seç</button>
-      <p class="intake-desc">
-        Sayfayı <kbd>Ctrl</kbd>+<kbd>S</kbd> ile kaydettiyseniz dosyayı seçin — ya da bu sayfanın
-        herhangi bir yerine <em>sürükleyip bırakın</em>. Birden fazla dosya seçebilirsiniz.
-      </p>
+      <button type="button" class="primary" id="pickFile">📁 Dosya seç</button>
+      <div class="intake-desc">
+        <p class="lead"><strong>En kolayı — hiçbir kurulum yok.</strong></p>
+        <ol class="steps">
+          <li>Kendi sitenizde <kbd>Ctrl</kbd>+<kbd>S</kbd>'ye basın (Mac: <kbd>⌘</kbd>+<kbd>S</kbd>).</li>
+          <li>Açılan pencerede <strong>Kaydet</strong> deyin — masaüstü olur.</li>
+          <li>Bu düğmeyle o dosyayı seçin, ya da dosyayı <em>tutup buraya bırakın</em>.</li>
+        </ol>
+        <p class="hint">Birden fazla sayfa kaydettiyseniz hepsini birden seçebilirsiniz — site geneli kontroller ancak o zaman çalışır.</p>
+      </div>
       <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple hidden>
     </div>
 
     <div class="intake-row">
       <button type="button" id="fromClip">📋 Panodan al</button>
       <p class="intake-desc">
-        Kaynağı zaten kopyaladıysanız. Sayfanın herhangi bir yerinde <kbd>Ctrl</kbd>+<kbd>V</kbd> de çalışır.
+        Sayfa kaynağını zaten kopyaladıysanız buna basın. Panelin herhangi bir yerinde
+        <kbd>Ctrl</kbd>+<kbd>V</kbd> de aynı işi yapar.
       </p>
+    </div>
+
+    <div class="intake-row">
+      <a id="bmk" class="bmk" draggable="true" href="#">⚡ Sayfayı Yakala</a>
+      <div class="intake-desc">
+        <p class="lead"><strong>İleri seviye — bir kez kurun, sonra her sayfada tek tık.</strong></p>
+        <p>Bunu tarayıcınızın yer imi çubuğuna bir kez yerleştirirsiniz; sonra kendi sitenizde herhangi
+        bir sayfadayken ona tıklamanız yeterli olur. Kurulumu bilmiyorsanız aşağıyı açın —
+        <strong>bilmiyorsanız gerek de yok, yukarıdaki iki yol aynı sonucu verir.</strong></p>
+
+        <details class="bmk-how" id="bmkHow">
+          <summary>Nasıl kurulur? (30 saniye)</summary>
+
+          <p class="step0"><strong>Önce:</strong> tarayıcınızın üstünde, adres çubuğunun hemen altında
+          ince bir şerit görüyor musunuz? Görmüyorsanız <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>'ye
+          basın (Mac: <kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>B</kbd>). İşte o şerit <em>yer imi çubuğu</em>.</p>
+
+          <figure class="bmk-fig">
+            <svg viewBox="0 0 340 150" role="img" width="100%"
+                 aria-label="“Sayfayı Yakala” düğmesi, tarayıcının adres çubuğunun altındaki yer imi şeridine sürükleniyor">
+              <!-- tarayıcı penceresi -->
+              <rect x="8" y="8" width="324" height="134" rx="7" class="fig-frame"/>
+              <circle cx="22" cy="21" r="3.2" class="fig-dot"/>
+              <circle cx="33" cy="21" r="3.2" class="fig-dot"/>
+              <circle cx="44" cy="21" r="3.2" class="fig-dot"/>
+              <!-- adres çubuğu -->
+              <rect x="56" y="14" width="264" height="14" rx="7" class="fig-bar"/>
+              <text x="66" y="24.5" class="fig-label">sitesiniz.com</text>
+              <!-- yer imi şeridi: hedef -->
+              <rect x="14" y="34" width="312" height="18" rx="4" class="fig-drop"/>
+              <text x="22" y="46.5" class="fig-label">yer imi çubuğu — hedef burası</text>
+              <!-- sürüklenen düğme -->
+              <g class="fig-chip">
+                <rect x="150" y="100" width="118" height="26" rx="6"/>
+                <text x="209" y="117" text-anchor="middle">⚡ Sayfayı Yakala</text>
+              </g>
+              <!-- sürükleme oku: düğmenin üstünden şeridin ortasına -->
+              <path d="M203 97 C 196 82, 180 68, 166 58" class="fig-arrow" marker-end="url(#tip)"/>
+              <defs>
+                <marker id="tip" viewBox="0 0 10 10" refX="8" refY="5"
+                        markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" class="fig-arrowhead"/>
+                </marker>
+              </defs>
+            </svg>
+            <figcaption>Soldaki <strong>⚡ Sayfayı Yakala</strong> düğmesini fareyle tutup şeridin üstüne bırakın.</figcaption>
+          </figure>
+
+          <ol class="steps">
+            <li>Yukarıdaki <strong>⚡ Sayfayı Yakala</strong> düğmesinin üstüne gelin, farenin sol tuşuna
+              <em>basılı tutun</em>.</li>
+            <li>Tuşu bırakmadan fareyi yer imi çubuğunun üstüne götürün.</li>
+            <li>Orada tuşu bırakın. Çubukta “Sayfayı Yakala” diye bir yer imi belirir. Bitti.</li>
+          </ol>
+
+          <p class="hint">Sürükleme tutmuyorsa: <button type="button" class="link inline" id="copyBmk">kodu kopyalayın</button>,
+          sonra <kbd>Ctrl</kbd>+<kbd>D</kbd> ile bir yer imi ekleyin, o yer imini düzenleyip
+          <strong>adres alanına</strong> yapıştırın.</p>
+        </details>
+      </div>
     </div>
 
     <p class="intake-note">
@@ -493,10 +588,20 @@ code { font: 400 .875em/1 var(--mono); background: var(--surface-sunk); padding:
   // gördüğü için bu genelde daha doğru bir girdidir.
   const panelUrl = location.href.split('#')[0];
 
-  const BOOKMARKLET = 'javascript:' + encodeURI(`(function(){
+  // Panele bir adresle geri dönebilir miyiz? Panel bir çerçeve içindeyse (Claude'un
+  // penceresi böyle) `location.href` sandbox adresidir, kullanıcının açabileceği
+  // adres değil; diskten açıldıysa http(s) bir sayfadan file:// adresine gidilemez.
+  // İki durumda da yer imi panele dönmeye çalışmaz, sayfayı panoya kopyalar.
+  let inFrame;
+  try { inFrame = window.top !== window.self; } catch { inFrame = true; }
+  const canReturnToPanel = /^https?:$/.test(location.protocol) && !inFrame;
+
+  const GRAB_HTML = "var h='<!doctype html>\\n'+document.documentElement.outerHTML;";
+
+  const OPEN_MODE = `(function(){
 var w=window.open('','_blank');
 (async function(){try{
-var h='<!doctype html>\\n'+document.documentElement.outerHTML;
+${GRAB_HTML}
 var s=new Blob([h]).stream().pipeThrough(new CompressionStream('gzip'));
 var b=new Uint8Array(await new Response(s).arrayBuffer());
 var t='';for(var i=0;i<b.length;i+=32768){t+=String.fromCharCode.apply(null,b.subarray(i,i+32768));}
@@ -505,17 +610,38 @@ if(d.length>1500000){throw new Error('sayfa cok buyuk');}
 var u=${JSON.stringify(panelUrl)}+'\\x23seo='+d+'&u='+encodeURIComponent(location.href);
 if(w){w.location=u;}else{location.href=u;}
 }catch(e){if(w){w.close();}alert('Sayfa yakalanamadi: '+e.message);}})();
-})()`.replace(/\n/g, ''));
+})()`;
+
+  const CLIPBOARD_MODE = `(function(){
+(async function(){try{
+${GRAB_HTML}
+await navigator.clipboard.writeText(h);
+alert('Sayfa kopyalandi. SEO paneline donup "Panodan al" dugmesine basin.');
+}catch(e){alert('Sayfa kopyalanamadi: '+e.message);}})();
+})()`;
+
+  const BOOKMARKLET = 'javascript:'
+    + encodeURI((canReturnToPanel ? OPEN_MODE : CLIPBOARD_MODE).replace(/\n/g, ''));
 
   const bmk = $('bmk');
   bmk.setAttribute('href', BOOKMARKLET);
   bmk.addEventListener('click', (e) => {
     e.preventDefault();
-    say('warn', 'Bu düğmeyi tıklamayın — yer imi çubuğuna sürükleyin, sonra kendi sitenizde tıklayın.');
+    $('bmkHow').open = true;
+    say('warn', 'Bu düğme burada tıklanmaz — yer imi çubuğuna sürüklenir. Nasıl yapılacağını hemen altında açtım.');
   });
   bmk.addEventListener('dragstart', (e) => {
     e.dataTransfer.setData('text/uri-list', BOOKMARKLET);
     e.dataTransfer.setData('text/plain', BOOKMARKLET);
+  });
+
+  $('copyBmk').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(BOOKMARKLET);
+      say('ok', 'Kod kopyalandı. Ctrl+D ile yer imi ekleyin, düzenleyip adres alanına yapıştırın.');
+    } catch {
+      say('warn', 'Tarayıcı kopyalamaya izin vermedi. Yukarıdaki iki yol (dosya seç, panodan al) kurulum istemez.');
+    }
   });
   /** Yer iminin bıraktığı `#seo=…&u=…` fragmanını çözer ve denetimi başlatır. */
   async function readFragment() {
@@ -607,12 +733,14 @@ if(w){w.location=u;}else{location.href=u;}
     say('ok', `Yapıştırıldı — ${text.length.toLocaleString('tr-TR')} karakter. “Denetle”ye basın.`);
   });
 
-  // Yer imi yüküyle gelindiyse onu işle; gelinmediyse ve panel diskten açıldıysa
-  // yer iminin bu kopyada çalışmayacağını baştan söyle (http(s) → file:// gidilemez).
+  // Yer imi yüküyle gelindiyse onu işle; gelinmediyse ve panele adresle dönülemiyorsa
+  // yer iminin bu kopyada ne yapacağını baştan söyle — sürprizle karşılaşılmasın.
   if (location.hash.includes('seo=')) {
     readFragment();
-  } else if (location.protocol === 'file:') {
-    say('warn', 'Panel bilgisayarınızdaki bir dosyadan açıldığı için “Sayfayı Yakala” çalışmaz. Dosya seçme yolunu kullanın.');
+  } else if (!canReturnToPanel) {
+    say('warn', inFrame
+      ? 'Panel bir pencere içinde çalıştığı için “Sayfayı Yakala” paneli kendisi açamaz: sayfayı panoya kopyalar, siz buraya dönüp “Panodan al”a basarsınız.'
+      : 'Panel diskteki bir dosyadan açıldığı için “Sayfayı Yakala” paneli kendisi açamaz: sayfayı panoya kopyalar, siz buraya dönüp “Panodan al”a basarsınız.');
   }
 
   // --- Çalıştır -----------------------------------------------------------
