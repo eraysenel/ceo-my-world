@@ -368,14 +368,8 @@ export async function maybeGunzip(buffer) {
   return buffer.toString('utf8');
 }
 
-/** `lastmod` W3C tarih biçimine uyuyor mu ve gelecekte değil mi? */
-export function validLastmod(value, now = Date.now()) {
-  if (!value) return { valid: false, reason: 'missing' };
-  if (!/^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?(\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/.test(value)) {
-    return { valid: false, reason: 'format' };
-  }
-  const t = Date.parse(value);
-  if (Number.isNaN(t)) return { valid: false, reason: 'format' };
-  if (t > now + 86400000) return { valid: false, reason: 'future' };
-  return { valid: true };
-}
+// `validLastmod` buradan taşındı: kural dosyaları onu kullanıyor ve bu modül
+// `node:zlib` çektiği için tüm kural zincirini Node'a bağlıyordu. Artık saf
+// `lib/validate.mjs` içinde; buradan yeniden dışa aktarılıyor ki mevcut
+// çağıranlar kırılmasın ve iki kopya oluşmasın.
+export { validLastmod } from './validate.mjs';
