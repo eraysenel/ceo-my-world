@@ -10,17 +10,48 @@ Sıralı, kopyala-yapıştır edilebilir operasyon rehberi. Her adımda: nereye 
 
 Hiçbir şey eklemeden önce **şu an ne olduğunu** görün. Zaten tanımlı bir başlığın üstüne ikinci kez yazmak, özellikle CSP'de, sessiz kırılmalara yol açar.
 
+Üç yol var; ilki hiçbir kurulum gerektirmiyor.
+
+### Yol 1 — MDN Observatory (en kolay)
+
+**https://developer.mozilla.org/en-US/observatory** adresine gidin, alan adınızı yazın, taramayı başlatın.
+
+Hangi başlıkların tanımlı olduğunu, hangilerinin eksik olduğunu ve bir puanı liste hâlinde verir. Başlamak için tek ihtiyacınız olan budur.
+
+Alt alan adını (`alt.ornek.com`) ayrıca tarayın — ayarları farklı olabilir.
+
+> Not: Observatory sitenizin **dışarıdan** görünen hâlini tarar. Site giriş duvarının arkasındaysa veya yayında değilse sonuç alamazsınız.
+
+### Yol 2 — Tarayıcı
+
+Kurulum yok, dış servise de ihtiyaç yok. Bkz. [Başlıkları tarayıcıdan görme](#başlıkları-tarayıcıdan-görme).
+
+### Yol 3 — Terminal
+
+Terminal kullanıyorsanız tek satırda:
+
 ```bash
 curl -sSI https://ornek.com/ | grep -iE 'strict-transport|content-security|x-content-type|x-frame|referrer-policy|permissions-policy|set-cookie|server|x-powered-by'
-```
-
-Çıktı boşsa hiçbiri tanımlı değil. Çıktıyı bir yere kaydedin — geri alma gerekirse başlangıç durumu bu.
-
-Alt alan adını da ayrıca ölçün, ayarlar farklı olabilir:
-
-```bash
 curl -sSI https://alt.ornek.com/ | grep -iE 'strict-transport|content-security|x-content-type|x-frame|referrer-policy'
 ```
+
+**Hangi yolu seçerseniz seçin, sonucu bir yere kaydedin.** Geri alma gerekirse başlangıç durumu bu.
+
+---
+
+## Başlıkları tarayıcıdan görme
+
+Bu tarif aşağıdaki her aşamada kullanılacak, o yüzden bir kez burada:
+
+1. Siteyi Chrome, Edge veya Firefox'ta açın.
+2. **F12** tuşuna basın (veya sağ tık → *İncele* / *Öğeyi denetle*).
+3. Üstteki sekmelerden **Network** (Türkçe arayüzde *Ağ*) sekmesine geçin.
+4. **Sayfayı yenileyin** (F5). Liste dolmaya başlar — yenilemeden liste boş görünür, en sık takılınan yer burasıdır.
+5. Listedeki **ilk satıra** tıklayın (sayfanın kendi adresi, tür sütununda `document` yazar).
+6. Sağda açılan panelde **Headers** (*Üst Bilgiler*) sekmesine geçin.
+7. **Response Headers** (*Yanıt Üst Bilgileri*) bölümüne bakın — eklediğiniz başlıklar burada görünür.
+
+Bir başlık listede yoksa tanımlı değildir. Değişiklik yaptıysanız ve hâlâ eskisini görüyorsanız **önbelleği atlayarak yenileyin**: `Ctrl + Shift + R` (Mac'te `Cmd + Shift + R`).
 
 ---
 
@@ -56,11 +87,16 @@ Bu üçü neredeyse hiçbir siteyi kırmaz. Önce bunlarla başlayın; hem hızl
 | `Referrer-Policy` | `strict-origin-when-cross-origin` |
 | `Permissions-Policy` | `camera=(), microphone=(), geolocation=(), payment=(), usb=()` |
 
-**Doğrulama:**
+**Doğrulama:** [Tarayıcıdan](#başlıkları-tarayıcıdan-görme) Response Headers altında üçü de görünmeli:
+`x-content-type-options`, `referrer-policy`, `permissions-policy`.
+
+<details><summary>Terminal kullanıyorsanız</summary>
 
 ```bash
 curl -sSI https://ornek.com/ | grep -iE 'x-content-type-options|referrer-policy|permissions-policy'
 ```
+
+</details>
 
 **Geri alma:** Aynı ekrandaki kuralı *Disable* edin veya silin. Etki anında.
 
@@ -82,13 +118,27 @@ curl -sSI https://ornek.com/ | grep -iE 'x-content-type-options|referrer-policy|
 
 **Sıra:**
 
-1. Önce tüm alt alan adlarınızın HTTPS sunduğunu doğrulayın:
+1. Önce **tüm** alt alan adlarınızın HTTPS sunduğunu doğrulayın. Her birini tarayıcıda ayrı bir sekmede açın ve adres çubuğunda **kilit simgesi** çıktığını görün:
+
+   - `https://ornek.com`
+   - `https://www.ornek.com`
+   - `https://alt.ornek.com`
+
+   Biri açılmıyorsa, uyarı veriyorsa veya sertifika hatası gösteriyorsa `Include subdomains`'i **açmayın** — açarsanız o adres tamamen erişilemez hâle gelir.
+
+   Unuttuğunuz bir alt alan adı olabileceğini aklınızda tutun: eski test ortamları, ayrı bir sunucudaki panel, e-posta arayüzü. Cloudflare'da **DNS → Records** listesinde tüm alt alan adlarını görebilirsiniz; listeyi oradan kontrol edin.
+
+   <details><summary>Terminal kullanıyorsanız</summary>
+
    ```bash
    for h in ornek.com www.ornek.com alt.ornek.com; do
      printf '%-28s' "$h"; curl -sS -o /dev/null -w '%{http_code}\n' --max-time 10 "https://$h/"
    done
    ```
-   Hepsi 2xx/3xx dönmeli. Biri bağlanamıyorsa `Include subdomains`'i **açmayın**.
+
+   Hepsi 2xx/3xx dönmeli.
+
+   </details>
 
 2. **Kısa süre ile başlayın:** `Max Age Header (max-age)` → **6 months** yerine mümkünse en kısa seçenek. Panel sabit seçenekler sunuyorsa en küçüğünü seçin.
 3. Birkaç gün sorunsuz geçtiyse `12 months`'a çıkarın.
@@ -96,11 +146,15 @@ curl -sSI https://ornek.com/ | grep -iE 'x-content-type-options|referrer-policy|
 
 **Hedef değer:** `max-age=31536000; includeSubDomains`
 
-**Doğrulama:**
+**Doğrulama:** [Tarayıcıdan](#başlıkları-tarayıcıdan-görme) `strict-transport-security` satırını arayın; `max-age` değerinin beklediğiniz sayı olduğunu kontrol edin.
+
+<details><summary>Terminal kullanıyorsanız</summary>
 
 ```bash
 curl -sSI https://ornek.com/ | grep -i strict-transport-security
 ```
+
+</details>
 
 **Geri alma:** Panelden HSTS'i kapatın — ama yukarıdaki uyarıyı okuyun: mevcut ziyaretçilerde süre dolana kadar etkili kalır. Acil durumda `max-age=0` yayınlayın.
 
@@ -122,11 +176,15 @@ Sayfanızın görünmez bir iframe içine gömülüp kullanıcıya yanlış yere
 
 Sayfalarınız bilinçli olarak başka sitelere gömülüyorsa (widget, gömülü oynatıcı, iş ortağı sayfası) bu adımı atlayın ve doğrudan Aşama 5'te `frame-ancestors` ile izinli alan adlarını listeleyin.
 
-**Doğrulama:**
+**Doğrulama:** [Tarayıcıdan](#başlıkları-tarayıcıdan-görme) `x-frame-options: SAMEORIGIN` görünmeli.
+
+<details><summary>Terminal kullanıyorsanız</summary>
 
 ```bash
 curl -sSI https://ornek.com/ | grep -i x-frame-options
 ```
+
+</details>
 
 **Geri alma:** Başlığı kuraldan çıkarın. Etki anında.
 
@@ -157,11 +215,15 @@ default-src 'self'; script-src 'self' https://www.googletagmanager.com; style-sr
 
 **En az 1 hafta bu modda kalın.** Az gezilen sayfalar (form gönderim sonucu, ödeme adımı, yönetim paneli) ancak gerçek trafikte ortaya çıkar.
 
-**Doğrulama:**
+**Doğrulama:** [Tarayıcıdan](#başlıkları-tarayıcıdan-görme) `content-security-policy-report-only` satırı görünmeli. Başlık adında **`-report-only`** ekinin bulunduğundan emin olun — eki unutursanız politika zorlayıcı olur ve siteyi kırabilir.
+
+<details><summary>Terminal kullanıyorsanız</summary>
 
 ```bash
 curl -sSI https://ornek.com/ | grep -i content-security-policy-report-only
 ```
+
+</details>
 
 **Geri alma:** Başlığı kaldırın. Zaten hiçbir şeyi engellemediği için risk yok.
 
@@ -191,7 +253,9 @@ Content-Security-Policy: script-src 'self' 'nonce-r4nd0m123'
 
 Nonce her istekte **farklı** olmalı; sabit bir değer korumayı tamamen ortadan kaldırır.
 
-**Doğrulama:** Siteyi gezin, konsolda engellenen kaynak var mı bakın. Bir şey kırıldıysa hemen `Report-Only`'ye geri dönün.
+**Doğrulama:** Sitenin **tüm** önemli sayfalarını gezin — ana sayfa, hizmet sayfaları, iletişim formu, varsa üyelik girişi. Her sayfada `F12 → Console` sekmesine bakın; kırmızı `Content Security Policy` uyarısı çıkmamalı. Görsel olarak da kontrol edin: eksik görsel, çalışmayan buton veya açılmayan sohbet penceresi engellenen bir kaynağın işaretidir.
+
+Bir şey kırıldıysa hemen `Report-Only`'ye geri dönün — düzeltmeyi sonra yaparsınız, site ayakta kalsın.
 
 **Geri alma:** Başlık adını tekrar `Content-Security-Policy-Report-Only` yapın. Etki anında.
 
@@ -241,7 +305,13 @@ Denetimde 403 alırsanız **ilk bakılacak yer burasıdır**. Güvenlik ayarı S
 
 ## Bitirdikten sonra doğrulama
 
-**1. Bu depodaki araçla:**
+**1. MDN Observatory** — [developer.mozilla.org/en-US/observatory](https://developer.mozilla.org/en-US/observatory)
+
+Alan adını yazın, taramayı başlatın. Başlangıçtaki puanla karşılaştırın: yaptığınız işin karşılığını en net burada görürsünüz. Alt alan adını da ayrıca tarayın.
+
+**2. Tarayıcıdan** — [Response Headers listesine bakın](#başlıkları-tarayıcıdan-görme); tablodaki başlıkların hepsi orada mı?
+
+**3. Bu depodaki araçla** (terminal gerektirir):
 
 ```bash
 cd plugins/seo-suite/tools
@@ -250,9 +320,7 @@ node seo-audit.mjs https://ornek.com --format md,html --out ../../../reports/orn
 
 `security` kategorisi **yalnızca canlı taramada** çalışır (yanıt başlığı gerektirir). Çevrimdışı modda "değerlendirilemedi" yazar — sıfır değil, çünkü ölçülmemiş olmak kötü olmakla aynı şey değildir.
 
-**2. Dış doğrulama:** [MDN HTTP Observatory](https://developer.mozilla.org/en-US/observatory)
-
-**3. Elle:**
+**4. Terminalden tek satırda:**
 
 ```bash
 curl -sSI https://ornek.com/ | grep -iE 'strict-transport|content-security|x-content-type|x-frame|referrer-policy|permissions-policy'
