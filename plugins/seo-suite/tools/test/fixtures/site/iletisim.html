@@ -1,0 +1,39 @@
+<!-- fixture: kodlama ve dil sorunlu sayfa
+     beklenen: turkish-mojibake, charset-declaration-late,
+               lang-attribute-mismatch, canonical-missing -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Bize ulasin: telefon, e-posta ve studyo adresi.">
+<title>İletişim | Örnek Dublaj</title>
+<style>
+/* Bu blok, meta charset etiketinin ilk 1024 baytin disina itilmesi icin burada.
+   Gercek dunyada ayni etki, head icine yerlestirilen buyuk satir ici stil
+   bloklari, etiket yoneticisi betikleri veya tema tarafindan uretilen uzun
+   yorum bloklariyla olusur. Tarayici ilk 1024 bayt icinde kodlamayi goremezse
+   tahmin yurutmeye baslar; Turkce karakterler bu noktada bozulur.
+   Bu yorumun uzunlugu bilincli olarak secilmistir, doldurma amaclidir.
+   Ayni durum WordPress temalarinda ve eski CMS ciktilarinda cok sik gorulur.
+   Satir sayisini artirmak icin birkac satir daha ekleniyor.
+   Kodlama beyani her zaman head icindeki ilk etiketlerden biri olmalidir.
+   Aksi halde sunucu basligi da yoksa sonuc ongorulemez olur. */
+body { font-family: system-ui, sans-serif; margin: 0; }
+main { max-width: 40rem; margin: 0 auto; padding: 2rem 1rem; }
+h1 { font-size: 1.6rem; }
+</style>
+<meta charset="utf-8">
+</head>
+<body>
+<nav><a href="/">Ana sayfa</a></nav>
+<main>
+  <h1>Ä°letiÅŸim</h1>
+  <p>StÃ¼dyomuz Ä°stanbul KadÄ±kÃ¶y'de bulunuyor. Reklam seslendirme ve dublaj
+  projeleriniz iÃ§in bize telefon veya e-posta ile ulaÅŸabilirsiniz. Ã‡alÄ±ÅŸma
+  saatlerimiz hafta iÃ§i 09:00 - 18:00 arasÄ±ndadÄ±r.</p>
+  <p>Teklif almak için proje süresini, hedef dili ve teslim tarihini iletmeniz yeterli.
+  Aynı gün içinde geri dönüş yapıyoruz. Acil işlerde stüdyo takvimimizde öncelikli
+  slot açabiliyoruz; bu durumda ek ücret uygulanmıyor.</p>
+</main>
+</body>
+</html>

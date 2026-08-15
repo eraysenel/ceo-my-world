@@ -1,0 +1,10 @@
+node_modules/
+*.log
+.DS_Store
+.env
+.env.*
+
+# Denetim çalışma dosyaları (raporlar depoya girer, ham yakalamalar girmez)
+captures/
+*.har
+crawl.jsonl
