@@ -3,7 +3,7 @@
 // indexlememesi gerektiğini sanıyorsa geri kalan her şey teoriktir.
 
 import { defineRule } from '../lib/rules.mjs';
-import { validLastmod } from '../lib/http.mjs';
+import { validLastmod } from '../lib/validate.mjs';
 import {
   hostOf, stripWww, hasRawTurkishChars, hasUppercaseOrUnderscore, normalizeUrl, safeDecode, pathOf
 } from '../lib/url.mjs';
