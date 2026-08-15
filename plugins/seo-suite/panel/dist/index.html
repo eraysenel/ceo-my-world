@@ -487,11 +487,22 @@ var SeoAudit=(()=>{var Ls=Object.create;var jt=Object.defineProperty;var Os=Obje
         çalışabilenler üzerinden hesaplandı. Yüksek görünmesi sorun olmadığı anlamına gelmez.</div>`);
     }
     if (sec) {
+      // Güvenlik satırı da kapsamını söylemeli. Yanıt başlığı olmadan 11 kuralın
+      // 10'u çalışmaz; kalan tek kuraldan gelen "100/100" başlıklar sağlammış
+      // gibi okunur — kategori barlarındaki kısmi uyarısının burada da olması şart.
+      const secPartial = sec.score !== null && sec.totalRules > 0
+        && sec.evaluatedRules / sec.totalRules < 0.6;
+      const secScore = sec.score === null
+        ? 'değerlendirilemedi (yanıt başlıkları gerekir)'
+        : `${sec.score}/100${secPartial ? '~' : ''} · ${sec.evaluatedRules}/${sec.totalRules} kural`;
       out.push(`<div class="sep-note">
-        <strong style="color:var(--ink)">Güvenlik ve güven:</strong>
-        ${sec.score === null ? 'değerlendirilemedi (yanıt başlıkları gerekir)' : sec.score + '/100'} —
+        <strong style="color:var(--ink)">Güvenlik ve güven:</strong> ${secScore} —
         genel SEO skoruna <em>dahil değildir</em>. CSP, HSTS ve benzeri başlıklar sıralama faktörü değildir;
-        ayrı ölçülür.</div>`);
+        ayrı ölçülür.${secPartial
+          ? ` <strong style="color:var(--warning)">Bu skor ${sec.evaluatedRules} kuraldan geliyor;
+              başlık gerektiren ${sec.totalRules - sec.evaluatedRules} kural çalışmadı — güvenlik
+              başlıklarınızın sağlam olduğu anlamına gelmez.</strong>`
+          : ''}</div>`);
     }
     out.push('</div>');
 
