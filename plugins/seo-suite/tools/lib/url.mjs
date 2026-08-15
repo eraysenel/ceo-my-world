@@ -75,7 +75,7 @@ const MULTI_LEVEL_TLDS = new Set([
   'co.uk', 'org.uk', 'com.au', 'co.jp', 'com.br'
 ]);
 
-/** Kayıtlı alan adını döndürür (ornek.com.tr, resvido.com gibi). */
+/** Kayıtlı alan adını döndürür (ornek.com.tr, ornek.com gibi). */
 export function registrableDomain(url) {
   let host;
   try {

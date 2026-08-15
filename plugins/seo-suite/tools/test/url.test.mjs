@@ -47,12 +47,12 @@ test('resolveUrl: gezinme dışı şemalar yok sayılır', () => {
 test('registrableDomain: iki seviyeli TR uzantılarını doğru işler', () => {
   assert.equal(registrableDomain('https://www.ornek.com.tr/a'), 'ornek.com.tr');
   assert.equal(registrableDomain('https://alt.ornek.com.tr/a'), 'ornek.com.tr');
-  assert.equal(registrableDomain('https://dublaj.resvido.com/a'), 'resvido.com');
+  assert.equal(registrableDomain('https://alt.ornek.com/a'), 'ornek.com');
 });
 
 test('sameSite: alt alan adı aynı siteye sayılır', () => {
-  assert.ok(sameSite('https://dublaj.resvido.com/a', 'https://resvido.com/b'));
-  assert.ok(!sameSite('https://baska.test/a', 'https://resvido.com/b'));
+  assert.ok(sameSite('https://alt.ornek.com/a', 'https://ornek.com/b'));
+  assert.ok(!sameSite('https://baska.test/a', 'https://ornek.com/b'));
 });
 
 test('hasRawTurkishChars: kodlanmış ve kodlanmamış Türkçe karakteri yakalar', () => {
