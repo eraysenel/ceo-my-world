@@ -1,17 +1,45 @@
 # SEO Paneli
 
-Sayfa kaynağını yapıştırın, denetim tarayıcınızda çalışsın. Sunucu yok, kurulum yok, veri hiçbir yere gönderilmez.
+Sayfayı panele verin, denetim tarayıcınızda çalışsın. Sunucu yok, kurulum yok, veri hiçbir yere gönderilmez.
 
 ## Kullanım
 
 **Tek dosya:** `dist/index.html`'i indirip çift tıklayın. Başka hiçbir şey gerekmez — kural motoru dosyanın içine gömülüdür.
 
-Sonra her sayfa için:
+Sayfayı vermenin dört yolu var; hepsi aynı yere bağlanır.
 
-1. Sayfayı tarayıcıda açın
-2. `Ctrl + U` (Mac: `Cmd + Option + U`) — sayfa kaynağı açılır
-3. `Ctrl + A`, `Ctrl + C`
-4. Panele yapıştırın, adresini yazın, **Denetle**
+### 1. "Sayfayı Yakala" yer imi — tek tık
+
+Paneldeki turuncu düğmeyi **bir kez** yer imi çubuğuna sürükleyin. Sonra kendi sitenizin herhangi bir sayfasındayken o yer imine tıklayın: sayfa yakalanır, panel yeni sekmede açılır, denetim kendiliğinden koşar.
+
+Bilinmesi gerekenler:
+
+- Yakalanan `view-source` çıktısı değil, **render edilmiş DOM**'dur. JavaScript ile sonradan eklenen içerik de dahil olur. Arama motorları da render edilmiş hâli gördüğü için bu genelde daha doğru bir girdidir.
+- Veri gzip'lenip adres fragmanında taşınır (`#seo=…`). Fragman **sunucuya gönderilmez**; sayfanız tarayıcınızdan çıkmaz.
+- Sitenizde `script-src` içeren bir CSP varsa tarayıcı yer imlerini engelleyebilir. (İronik biçimde bunu bizim güvenlik rehberimiz öneriyor.) O durumda 2. yolu kullanın.
+- Panel `file://` ile diskten açıldıysa yer imi çalışmaz: bir `https` sayfasından `file://` adresine gidilemez. Panel bunu açılışta söyler.
+
+### 2. "Dosya seç" ya da sürükle-bırak — en güvenilir
+
+Sayfayı `Ctrl + S` ile kaydedin, dosyayı seçin — ya da panelin herhangi bir yerine sürükleyip bırakın. Hiçbir izin gerektirmez, her tarayıcıda çalışır.
+
+Birden fazla dosya verebilirsiniz: her biri ayrı sayfa kartı olur ve site geneli kurallar (yinelenen başlık, öksüz sayfa, iç link derinliği) tek hamlede devreye girer.
+
+Adres alanı, kaynaktaki `<link rel="canonical">` ya da `og:url` etiketinden kendiliğinden doldurulur; ikisi de yoksa elle yazmanız istenir.
+
+### 3. "Panodan al"
+
+Kaynağı zaten kopyaladıysanız. Tarayıcı pano izni vermezse panel sessiz kalmaz, sizi kutuya yönlendirir.
+
+### 4. Panelin herhangi bir yerine `Ctrl + V`
+
+HTML'e benzeyen bir şey yapıştırırsanız doğrudan bir karta düşer.
+
+### Neden "adresi yaz, getir" düğmesi yok
+
+Bir web sayfası başka bir alan adının HTML'ini indiremez: tarayıcının same-origin kuralı, hedef site CORS başlığı göndermedikçe engeller. Bu her site için geçerli bir tarayıcı kısıtıdır, panelin eksiği değil. Her zaman hata verecek bir düğme konulmadı.
+
+Tüm sitenizi adresten tarayan bir araç istiyorsanız o CLI'dır — aşağıya bakın.
 
 ## Neyi ölçer, neyi ölçmez
 

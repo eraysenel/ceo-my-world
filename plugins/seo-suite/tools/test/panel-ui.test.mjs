@@ -8,6 +8,7 @@
 import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile, access } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright-core';
@@ -45,13 +46,20 @@ function guard(t) {
 }
 
 /** Paneli açar, konsol hatalarını toplar. */
-async function openPanel(colorScheme = 'light') {
+async function openPanel(colorScheme = 'light', hash = '') {
   const page = await browser.newPage({ colorScheme });
   const errors = [];
   page.on('pageerror', (e) => errors.push(String(e.message)));
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
-  await page.goto(`file://${PANEL}`);
+  await page.goto(`file://${PANEL}${hash}`);
   return { page, errors };
+}
+
+/** Yer iminin ürettiği yükü Node tarafında taklit eder: gzip + base64url. */
+function captureFragment(html, url) {
+  const data = gzipSync(Buffer.from(html, 'utf8'))
+    .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `#seo=${data}&u=${encodeURIComponent(url)}`;
 }
 
 test('panel hatasız yükleniyor ve motoru bildiriyor', async (t) => {
@@ -159,6 +167,78 @@ test('güvenlik skoru kapsamını gizlemiyor', async (t) => {
   assert.match(sec, /1\/11 kural/, 'kaç kuralın çalıştığı yazılmalı');
   assert.match(sec, /güvenlik başlıklarınızın sağlam olduğu anlamına gelmez/,
     'kısmi kapsamda açık uyarı olmalı');
+  await page.close();
+});
+
+test('yer imi fragmanı sayfayı doldurup denetimi kendiliğinden başlatıyor', async (t) => {
+  if (guard(t)) return;
+  const html = await readFile(FIXTURE, 'utf8');
+  const { page, errors } = await openPanel('light', captureFragment(html, 'https://ornek.test/hizmetler'));
+
+  // Denetim kullanıcı hiçbir düğmeye basmadan koşmalı.
+  await page.waitForSelector('#results:not([hidden]) .summary');
+  assert.equal(await page.inputValue('#u1'), 'https://ornek.test/hizmetler');
+  assert.ok((await page.inputValue('#h1')).length > 100, 'kaynak karta yazılmalı');
+  assert.match(await page.textContent('#intakeStatus'), /Sayfa yakalandı/);
+
+  // Fragman adres çubuğunda kalmamalı: hem çok uzun hem yenilemede tekrar koşar.
+  assert.equal(await page.evaluate(() => location.hash), '', 'fragman temizlenmeli');
+
+  assert.deepEqual(errors, [], 'konsolda hata olmamalı');
+  await page.close();
+});
+
+test('bozuk fragman paneli çökertmiyor', async (t) => {
+  if (guard(t)) return;
+  const { page, errors } = await openPanel('light', '#seo=bu-gzip-degil&u=https%3A%2F%2Fornek.test%2F');
+  await page.waitForFunction(() => document.getElementById('intakeStatus').textContent.trim() !== '');
+  assert.match(await page.textContent('#intakeStatus'), /çözülemedi/);
+  assert.equal(await page.isVisible('#results'), false, 'sonuç bölümü açılmamalı');
+  assert.deepEqual(errors, [], 'konsolda hata olmamalı');
+  await page.close();
+});
+
+test('dosya seçmek kartları dolduruyor, adres kaynaktan okunuyor', async (t) => {
+  if (guard(t)) return;
+  const { page, errors } = await openPanel();
+  const html = await readFile(FIXTURE, 'utf8');
+
+  await page.setInputFiles('#fileInput', [
+    { name: 'hizmetler.html', mimeType: 'text/html', buffer: Buffer.from(html) },
+    {
+      name: 'iletisim.html',
+      mimeType: 'text/html',
+      buffer: Buffer.from('<!doctype html><html lang="tr"><head><meta charset="utf-8">'
+        + '<link rel="canonical" href="https://ornek.test/iletisim">'
+        + '<title>İletişim sayfası başlığı buraya</title></head>'
+        + '<body><main><h1>İletişim</h1><p>metin</p></main></body></html>')
+    }
+  ]);
+
+  await page.waitForFunction(() => document.querySelectorAll('.page-card').length >= 2);
+  assert.match(await page.textContent('#intakeStatus'), /2 sayfa eklendi/);
+  // İkinci dosyada canonical var; adres elle yazılmadan dolmalı.
+  assert.equal(await page.inputValue('#u2'), 'https://ornek.test/iletisim');
+  assert.deepEqual(errors, [], 'konsolda hata olmamalı');
+  await page.close();
+});
+
+test('yer imi dizesi geçerli JavaScript ve panel adresini taşıyor', async (t) => {
+  if (guard(t)) return;
+  const { page } = await openPanel();
+  const href = await page.getAttribute('#bmk', 'href');
+  assert.ok(href.startsWith('javascript:'), `javascript: URL olmalı: ${href.slice(0, 40)}`);
+
+  // Tarayıcının URL'yi çözdüğü gibi çözüp ayrıştırılabilirliğini doğrula.
+  const body = decodeURIComponent(href.slice('javascript:'.length));
+  assert.ok(!body.includes('#'), 'ham # fragman sayılıp kodu keser');
+  assert.match(body, /CompressionStream/);
+  assert.match(body, /file:\/\/.*index\.html/, 'panel adresi gömülü olmalı');
+  await page.evaluate((src) => { new Function(src); }, body); // ayrıştırılamazsa atar
+
+  // Panelde tıklanırsa çalışmaz; kullanıcı yönlendirilir.
+  await page.click('#bmk');
+  assert.match(await page.textContent('#intakeStatus'), /yer imi çubuğuna sürükleyin/);
   await page.close();
 });
 

@@ -113,11 +113,51 @@ h1 { font-size: var(--step-3); font-weight: 660; letter-spacing: -.022em; margin
   border-radius: 10px; box-shadow: var(--shadow);
 }
 
-/* ---- Nasıl yapılır ---- */
-.howto { padding: 1.25rem 1.4rem; margin-bottom: 1.5rem; }
-.howto h2 { font-size: var(--step-1); font-weight: 620; margin: 0 0 .6rem; letter-spacing: -.01em; }
-.howto ol { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: .3rem; }
-.howto li { color: var(--ink-soft); }
+/* ---- Sayfayı verme yolları ---- */
+.intake { padding: 1.25rem 1.4rem; margin-bottom: 1.5rem; }
+.intake h2 { font-size: var(--step-1); font-weight: 620; margin: 0 0 1rem; letter-spacing: -.01em; }
+.intake-row {
+  display: grid; grid-template-columns: minmax(10rem, 12rem) 1fr;
+  gap: .5rem 1.1rem; align-items: start;
+  padding: .85rem 0; border-top: 1px solid var(--line);
+}
+.intake-row:first-of-type { border-top: none; padding-top: 0; }
+@media (max-width: 34rem) { .intake-row { grid-template-columns: 1fr; } }
+.intake-desc { margin: 0; color: var(--ink-soft); font-size: .875rem; line-height: 1.6; }
+.intake-desc strong { color: var(--ink); }
+.intake-row > button { width: 100%; }
+
+/* Yer imi bağlantısı: düğme gibi görünür ama <a>'dır — sürüklenebilmesi gerekir. */
+.bmk {
+  display: block; text-align: center; text-decoration: none;
+  font: 600 .875rem/1 var(--sans); border-radius: 7px; padding: .65rem 1rem;
+  background: var(--accent); border: 1px solid var(--accent); color: var(--accent-ink);
+  cursor: grab; user-select: none;
+}
+.bmk:hover { filter: brightness(1.08); }
+.bmk:active { cursor: grabbing; }
+
+.intake-note {
+  margin: 1rem 0 0; padding: .8rem 1rem; border-radius: 7px;
+  background: var(--surface-sunk); color: var(--muted);
+  font-size: .8125rem; line-height: 1.6;
+}
+.intake-note strong { color: var(--ink-soft); }
+.intake-status { margin: .75rem 0 0; font-size: .8125rem; min-height: 1.2em; }
+.intake-status.ok { color: var(--good); }
+.intake-status.warn { color: var(--warning); }
+
+/* Sürükle-bırak örtüsü */
+.drop-hint {
+  position: fixed; inset: 0; z-index: 40;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  border: 3px dashed var(--accent); border-radius: 12px;
+  font: 620 var(--step-2)/1.3 var(--sans); color: var(--accent);
+  pointer-events: none; text-align: center; padding: 2rem;
+}
+.drop-hint[hidden] { display: none; }
+
 kbd {
   font: 600 .8125rem/1 var(--mono); background: var(--surface-sunk);
   border: 1px solid var(--line-strong); border-bottom-width: 2px;
@@ -278,15 +318,44 @@ code { font: 400 .875em/1 var(--mono); background: var(--surface-sunk); padding:
     Hiçbir veri sunucuya gönderilmez.
   </p>
 
-  <section class="card howto">
-    <h2>Sayfa kaynağı nasıl alınır</h2>
-    <ol>
-      <li>Sayfayı tarayıcıda açın</li>
-      <li><kbd>Ctrl</kbd> + <kbd>U</kbd> tuşlarına basın <span style="color:var(--muted)">(Mac: <kbd>Cmd</kbd> + <kbd>Option</kbd> + <kbd>U</kbd>)</span> — kaynak açılır</li>
-      <li><kbd>Ctrl</kbd> + <kbd>A</kbd>, sonra <kbd>Ctrl</kbd> + <kbd>C</kbd></li>
-      <li>Aşağıdaki kutuya yapıştırın</li>
-    </ol>
+  <section class="card intake">
+    <h2>Sayfayı nasıl vereceksiniz</h2>
+
+    <div class="intake-row">
+      <a id="bmk" class="bmk" draggable="true" href="#">⚡ Sayfayı Yakala</a>
+      <p class="intake-desc">
+        <strong>Tek tık — en kolayı.</strong> Bu düğmeyi tarayıcınızın <em>yer imi çubuğuna sürükleyin</em>
+        (bir kez). Sonra kendi sitenizdeyken ona tıklamanız yeterli: sayfa yakalanır, panel açılır,
+        denetim kendiliğinden başlar.
+      </p>
+    </div>
+
+    <div class="intake-row">
+      <button type="button" id="pickFile">📁 Dosya seç</button>
+      <p class="intake-desc">
+        Sayfayı <kbd>Ctrl</kbd>+<kbd>S</kbd> ile kaydettiyseniz dosyayı seçin — ya da bu sayfanın
+        herhangi bir yerine <em>sürükleyip bırakın</em>. Birden fazla dosya seçebilirsiniz.
+      </p>
+      <input type="file" id="fileInput" accept=".html,.htm,text/html" multiple hidden>
+    </div>
+
+    <div class="intake-row">
+      <button type="button" id="fromClip">📋 Panodan al</button>
+      <p class="intake-desc">
+        Kaynağı zaten kopyaladıysanız. Sayfanın herhangi bir yerinde <kbd>Ctrl</kbd>+<kbd>V</kbd> de çalışır.
+      </p>
+    </div>
+
+    <p class="intake-note">
+      <strong>Neden “adresi yaz, getir” düğmesi yok?</strong> Bir web sayfası başka bir alan adının
+      HTML'ini indiremez — tarayıcının same-origin kuralı, hedef site izin vermedikçe engeller.
+      Bu her site için geçerli bir tarayıcı kısıtı. Her zaman hata verecek bir düğme koymadım.
+    </p>
+
+    <p class="intake-status" id="intakeStatus" role="status" aria-live="polite"></p>
   </section>
+
+  <div id="dropHint" class="drop-hint" hidden>Bırakın — sayfa eklenecek</div>
 
   <div class="pages" id="pages"></div>
 
@@ -353,7 +422,7 @@ var SeoAudit=(()=>{var Ls=Object.create;var jt=Object.defineProperty;var Os=Obje
       </div>
       <div>
         <label for="h${n}">Sayfa kaynağı <span class="pasted" data-len="${n}"></span></label>
-        <textarea id="h${n}" placeholder="Ctrl+U ile açtığınız kaynağı buraya yapıştırın"></textarea>
+        <textarea id="h${n}" placeholder="Yukarıdaki düğmelerden birini kullanın — ya da sayfa kaynağını buraya yapıştırın"></textarea>
       </div>`;
     pagesEl.appendChild(card);
 
@@ -387,7 +456,172 @@ var SeoAudit=(()=>{var Ls=Object.create;var jt=Object.defineProperty;var Os=Obje
   }
 
   $('addPage').addEventListener('click', () => addPage());
-  addPage('https://ornek.com/');
+  addPage();
+
+  /**
+   * Kaynağı boş olan ilk karta yazar; yoksa yeni kart açar.
+   * Girdi olaylarını elle tetikler ki karakter sayacı ve "Denetle" düğmesi güncellensin.
+   */
+  function fillPage(url, html) {
+    let card = [...pagesEl.querySelectorAll('.page-card')]
+      .find((c) => !c.querySelector('textarea').value.trim());
+    if (!card) { addPage(); card = pagesEl.lastElementChild; }
+    const input = card.querySelector('input');
+    const ta = card.querySelector('textarea');
+    if (url) input.value = url;
+    ta.value = html;
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    return card;
+  }
+
+  /** Sayfanın kendi kanonik adresini kaynaktan okur — kullanıcı elle yazmasın diye. */
+  function guessUrl(html) {
+    try {
+      // parseFromString hareketsiz belge üretir: betik çalışmaz, kaynak indirilmez.
+      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const found = doc.querySelector('link[rel~="canonical" i][href]')?.getAttribute('href')
+        ?? doc.querySelector('meta[property="og:url"][content]')?.getAttribute('content');
+      const t = String(found ?? '').trim();
+      if (/^https?:\/\//i.test(t)) return t;
+    } catch { /* bozuk HTML: adres elle yazılır */ }
+    return '';
+  }
+
+  const statusEl = $('intakeStatus');
+  function say(kind, text) {
+    statusEl.className = 'intake-status' + (kind ? ' ' + kind : '');
+    statusEl.textContent = text;
+  }
+
+  // --- 1) "Sayfayı Yakala" yer imi ----------------------------------------
+  //
+  // Yakalanan, `view-source` çıktısı değil render edilmiş DOM'dur: JavaScript ile
+  // sonradan eklenen içerik de dahil olur. Arama motorları da render edilmiş hâli
+  // gördüğü için bu genelde daha doğru bir girdidir.
+  const panelUrl = location.href.split('#')[0];
+
+  const BOOKMARKLET = 'javascript:' + encodeURI(`(function(){
+var w=window.open('','_blank');
+(async function(){try{
+var h='<!doctype html>\\n'+document.documentElement.outerHTML;
+var s=new Blob([h]).stream().pipeThrough(new CompressionStream('gzip'));
+var b=new Uint8Array(await new Response(s).arrayBuffer());
+var t='';for(var i=0;i<b.length;i+=32768){t+=String.fromCharCode.apply(null,b.subarray(i,i+32768));}
+var d=btoa(t).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'');
+if(d.length>1500000){throw new Error('sayfa cok buyuk');}
+var u=${JSON.stringify(panelUrl)}+'\\x23seo='+d+'&u='+encodeURIComponent(location.href);
+if(w){w.location=u;}else{location.href=u;}
+}catch(e){if(w){w.close();}alert('Sayfa yakalanamadi: '+e.message);}})();
+})()`.replace(/\n/g, ''));
+
+  const bmk = $('bmk');
+  bmk.setAttribute('href', BOOKMARKLET);
+  bmk.addEventListener('click', (e) => {
+    e.preventDefault();
+    say('warn', 'Bu düğmeyi tıklamayın — yer imi çubuğuna sürükleyin, sonra kendi sitenizde tıklayın.');
+  });
+  bmk.addEventListener('dragstart', (e) => {
+    e.dataTransfer.setData('text/uri-list', BOOKMARKLET);
+    e.dataTransfer.setData('text/plain', BOOKMARKLET);
+  });
+  /** Yer iminin bıraktığı `#seo=…&u=…` fragmanını çözer ve denetimi başlatır. */
+  async function readFragment() {
+    const raw = location.hash.replace(/^#/, '');
+    if (!raw.includes('seo=')) return;
+    const params = new URLSearchParams(raw);
+    const data = params.get('seo');
+    const url = params.get('u') ?? '';
+    // Fragman adres çubuğunda kalmasın: hem çok uzun, hem yenilemede tekrar koşar.
+    try { history.replaceState(null, '', location.pathname + location.search); } catch { /* file:// */ }
+    if (!data) return;
+    try {
+      const b64 = data.replace(/-/g, '+').replace(/_/g, '/');
+      const bin = atob(b64 + '='.repeat((4 - (b64.length % 4)) % 4));
+      const bytes = Uint8Array.from(bin, (c) => c.charCodeAt(0));
+      const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+      const html = await new Response(stream).text();
+      if (!html.trim()) throw new Error('boş');
+      fillPage(url || guessUrl(html), html);
+      say('ok', `Sayfa yakalandı — ${html.length.toLocaleString('tr-TR')} karakter. Denetim başlıyor…`);
+      $('run').click();
+    } catch {
+      say('warn', 'Yakalanan veri çözülemedi. Sayfayı Ctrl+S ile kaydedip “Dosya seç” yolunu deneyin.');
+    }
+  }
+
+  // --- 2) Dosya seç + sürükle-bırak ---------------------------------------
+  async function addFiles(fileList) {
+    const files = [...fileList].filter((f) => /\.x?html?$/i.test(f.name) || f.type === 'text/html');
+    if (!files.length) { say('warn', 'HTML dosyası bulunamadı. `.html` uzantılı dosya seçin.'); return; }
+    let added = 0;
+    for (const f of files) {
+      try {
+        const html = await f.text();
+        if (!html.trim()) continue;
+        fillPage(guessUrl(html), html);
+        added += 1;
+      } catch { /* okunamayan dosya atlanır */ }
+    }
+    if (!added) { say('warn', 'Dosyalar okunamadı.'); return; }
+    const missing = [...pagesEl.querySelectorAll('.page-card')]
+      .filter((c) => c.querySelector('textarea').value.trim() && !c.querySelector('input').value.trim()).length;
+    say('ok', `${added} sayfa eklendi.` + (missing ? ` ${missing} tanesinin adresi bulunamadı — elle yazın.` : ' “Denetle”ye basın.'));
+  }
+
+  $('pickFile').addEventListener('click', () => $('fileInput').click());
+  $('fileInput').addEventListener('change', (e) => { addFiles(e.target.files); e.target.value = ''; });
+
+  const dropHint = $('dropHint');
+  const hasFiles = (e) => [...(e.dataTransfer?.types ?? [])].includes('Files');
+  let dragDepth = 0;
+  window.addEventListener('dragenter', (e) => {
+    if (!hasFiles(e)) return;
+    dragDepth += 1; dropHint.hidden = false;
+  });
+  window.addEventListener('dragover', (e) => { if (hasFiles(e)) e.preventDefault(); });
+  window.addEventListener('dragleave', () => { if (--dragDepth <= 0) { dragDepth = 0; dropHint.hidden = true; } });
+  window.addEventListener('drop', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dragDepth = 0; dropHint.hidden = true;
+    addFiles(e.dataTransfer.files);
+  });
+
+  // --- 3) Panodan al -------------------------------------------------------
+  $('fromClip').addEventListener('click', async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) { say('warn', 'Pano boş.'); return; }
+      if (!/<\s*(!doctype|html|head|body|div|meta)/i.test(text)) {
+        say('warn', 'Panodaki metin HTML kaynağına benzemiyor.'); return;
+      }
+      fillPage(guessUrl(text), text);
+      say('ok', `Panodan ${text.length.toLocaleString('tr-TR')} karakter alındı. “Denetle”ye basın.`);
+    } catch {
+      say('warn', 'Tarayıcı pano izni vermedi. Aşağıdaki kutuya Ctrl+V ile yapıştırabilirsiniz.');
+      pagesEl.querySelector('textarea')?.focus();
+    }
+  });
+
+  // --- 4) Sayfanın herhangi bir yerine Ctrl+V ------------------------------
+  document.addEventListener('paste', (e) => {
+    const t = e.target;
+    if (t instanceof HTMLTextAreaElement || t instanceof HTMLInputElement) return;
+    const text = e.clipboardData?.getData('text/plain') ?? '';
+    if (!/<\s*(!doctype|html|head|body)/i.test(text)) return;
+    e.preventDefault();
+    fillPage(guessUrl(text), text);
+    say('ok', `Yapıştırıldı — ${text.length.toLocaleString('tr-TR')} karakter. “Denetle”ye basın.`);
+  });
+
+  // Yer imi yüküyle gelindiyse onu işle; gelinmediyse ve panel diskten açıldıysa
+  // yer iminin bu kopyada çalışmayacağını baştan söyle (http(s) → file:// gidilemez).
+  if (location.hash.includes('seo=')) {
+    readFragment();
+  } else if (location.protocol === 'file:') {
+    say('warn', 'Panel bilgisayarınızdaki bir dosyadan açıldığı için “Sayfayı Yakala” çalışmaz. Dosya seçme yolunu kullanın.');
+  }
 
   // --- Çalıştır -----------------------------------------------------------
   $('run').addEventListener('click', () => {
