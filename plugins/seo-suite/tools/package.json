@@ -13,9 +13,15 @@
   },
   "scripts": {
     "test": "node --test test/*.test.mjs",
-    "audit": "node ./seo-audit.mjs"
+    "audit": "node ./seo-audit.mjs",
+    "build:panel": "node ./build-panel.mjs",
+    "check": "npm run build:panel && npm test"
   },
   "dependencies": {
     "cheerio": "^1.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "playwright-core": "^1.62.1"
   }
 }

@@ -196,6 +196,21 @@ export function hammingDistance(a, b) {
   return count;
 }
 
+const utf8Encoder = new TextEncoder();
+
+/**
+ * Bir metnin UTF-8 bayt uzunluğu.
+ *
+ * `Buffer.byteLength` yerine `TextEncoder` kullanılıyor: aynı sonucu verir ama
+ * tarayıcıda da çalışır. Kural motoru panel için tarayıcıya paketleniyor ve
+ * `Buffer` orada tanımlı değil — bayt sayımı Türkçe metinde kritik, çünkü
+ * `ş`, `ğ`, `İ` gibi harfler 2 bayt tutar ve `<meta charset>` konumu bayt
+ * cinsinden ölçülür.
+ */
+export function utf8Bytes(str) {
+  return utf8Encoder.encode(String(str ?? '')).length;
+}
+
 /** Metni verilen uzunlukta kısaltır (raporlarda kanıt göstermek için). */
 export function truncate(text, max = 120) {
   const str = String(text ?? '').replace(/\s+/g, ' ').trim();

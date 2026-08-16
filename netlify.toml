@@ -1,0 +1,23 @@
+# Netlify yayın ayarları.
+#
+# Derleme komutu yok: panel `dist/` içinde hazır duruyor, depoya derlenmiş
+# hâliyle giriyor. Netlify'ın yapması gereken tek şey o klasörü servis etmek.
+#
+# Güvenlik başlıkları buraya yazılmaz — `dist/_headers` derleme sırasında
+# üretilir, çünkü CSP satır içi blokların SHA-256 özetlerini içerir ve kod
+# değiştikçe o özetler de değişir. Elle tutulan bir kopya kaçınılmaz olarak
+# eskir ve paneli canlıda açılmaz hâle getirir.
+#
+# Adım adım kurulum: plugins/seo-suite/panel/netlify-yayinlama.md
+
+[build]
+  publish = "plugins/seo-suite/panel/dist"
+
+# `artifact.html` iskeletsiz sürümdür; Artifact olarak yayınlanırken dış
+# iskelet ona sarılır. Tek başına servis edilirse yarım bir sayfa olur,
+# bu yüzden ziyaretçi asıl panele gönderilir.
+[[redirects]]
+  from = "/artifact.html"
+  to = "/"
+  status = 301
+  force = true

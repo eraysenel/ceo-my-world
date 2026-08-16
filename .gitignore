@@ -4,7 +4,13 @@ node_modules/
 .env
 .env.*
 
-# Denetim çalışma dosyaları (raporlar depoya girer, ham yakalamalar girmez)
+# Denetim çıktıları ASLA depoya girmez.
+# Bunlar denetlenen sitenin verisidir: adresler, sunucu IP'leri, eksik DNS
+# kayıtları, güvenlik açıkları. Bu depo public; site verisi burada durmaz.
+# Araç bu klasörlere yazmaya devam eder, git almaz.
+reports/
+seo-rapor/
 captures/
 *.har
 crawl.jsonl
+audit.json

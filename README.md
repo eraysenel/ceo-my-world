@@ -1,6 +1,6 @@
 # SEO Suite
 
-Türkçe web siteleri için **Claude Code SEO denetim takımı**: 11 skill + çalıştırılabilir bir tarayıcı/denetleyici.
+Türkçe web siteleri için **Claude Code SEO denetim takımı**: 12 skill + 107 kurallı çalıştırılabilir bir tarayıcı/denetleyici.
 
 Bu depo aynı zamanda bir **Claude Code marketplace**'idir — tek komutla kurulur, `git pull` ile güncellenir.
 
@@ -61,12 +61,19 @@ Claude Code içinde:
 | `ai-search` | AI Overviews'ta alıntılanma, AI tarayıcı erişimi, SSR, `llms.txt` gerçeği |
 | `content-strategy` | Arama niyeti, topical authority, içerik brief'i, Türkçe anahtar kelime nüansları |
 | `local-seo` | Google Business Profile, NAP tutarlılığı, Türkiye yerel sinyalleri |
+| `security-headers` | CSP, HSTS, çerçeveleme koruması, çerez bayrakları, SRI — MDN Observatory tarzı |
 | `seo-reporting` | Skorlama, etki×efor önceliklendirme, rapor formatı, KPI takibi |
 | `modern-web-design` | Performans öncelikli arayüz, semantik HTML, erişilebilirlik |
 
-### Denetim aracı
+### Panel (terminal gerektirmez)
 
-`plugins/seo-suite/tools/` altında, Node 22+ ile çalışan bir CLI.
+`plugins/seo-suite/panel/dist/index.html` — indirip çift tıklayın. Sayfa kaynağını yapıştırın, skor kartı ve öncelikli tavsiye listesi anında çıksın. Kural motoru dosyanın içine gömülüdür; sunucu yok, veri hiçbir yere gitmez.
+
+107 kuralın 81'i yalnızca HTML gerektirir ve panelde çalışır. Kalan 26'sı yanıt başlığı ister; onlar puana sıfır olarak değil, **değerlendirme dışı** olarak girer. Ayrıntı: [`panel/README.md`](plugins/seo-suite/panel/README.md)
+
+### Denetim aracı (CLI)
+
+`plugins/seo-suite/tools/` altında, Node 22+ ile çalışan bir CLI. Panelle **aynı** kural motorunu kullanır; ikisinin aynı girdide aynı skoru verdiği teste bağlıdır.
 
 ```bash
 cd plugins/seo-suite/tools
@@ -116,6 +123,10 @@ Her fazın sonunda `reports/<alan-adi>/` altına dosya yazılır; hiçbir faz "t
 
 **Politika kararını hata sayma.** `GPTBot`'u engellemek bilinçli bir tercih olabilir. Araç bunu bildirir ama varsayılan olarak skordan düşmez.
 
+**Ölçmediğin kategoriye sıfır verme.** Çevrimdışı modda yanıt başlıkları olmadığı için güvenlik kuralları çalışmaz; rapor o kategoriye 0 değil "değerlendirilemedi" yazar. Ölçülmemiş olmak, kötü olmakla aynı şey değildir.
+
+**Güvenlik ayrı ölçülür.** CSP, HSTS ve benzeri başlıklar sıralama faktörü değildir; güvenlik skoru hesaplanır ama **genel SEO skoruna katılmaz**. Karıştırmak, SEO skorunun ölçtüğünü iddia ettiği şeyi ölçmemesi olurdu.
+
 **Türkçe birinci sınıf vatandaştır.** `İ`/`ı` büyük-küçük harf dönüşümü, `Intl.Collator('tr')` ile sıralama, URL'de yüzde kodlaması, mojibake (`Ã¼`, `ÅŸ`, `Ä±`) tespiti ve başlık genişliğinin karakter yerine **piksel** ile ölçülmesi araca gömülüdür.
 
 ---
@@ -125,7 +136,9 @@ Her fazın sonunda `reports/<alan-adi>/` altına dosya yazılır; hiçbir faz "t
 ```bash
 cd plugins/seo-suite/tools
 npm install
-npm test                    # node:test, ağ gerektirmez
+npm run build:panel         # panel kaynağını dist/ altına derler
+npm test                    # node:test; panel testleri Chromium varsa koşar
+npm run check               # ikisi birden
 claude plugin validate ../../..   # manifest + skill frontmatter doğrulaması
 ```
 

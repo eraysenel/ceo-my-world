@@ -9,7 +9,7 @@ import {
   resolveUrl, normalizeUrl, hostOf, sameSite, looksNonHtml, pathDepth
 } from './url.mjs';
 import {
-  wordCount, simhash, turkishStopwordRatio, detectMojibake, measureTextPx, trLower
+  wordCount, simhash, turkishStopwordRatio, detectMojibake, measureTextPx, trLower, utf8Bytes
 } from './text.mjs';
 
 export const load = cheerio.load;
@@ -85,7 +85,7 @@ export function buildPage(input) {
     ok: status >= 200 && status < 300,
     contentType: headers['content-type'] ?? null,
     headers,
-    bytes: { html: Buffer.byteLength(html, 'utf8'), transfer: transferBytes },
+    bytes: { html: utf8Bytes(html), transfer: transferBytes },
     timing,
     depth,
     pathDepth: pathDepth(url),
@@ -121,7 +121,7 @@ function parseHead($, url, base, html, headers) {
   // <meta charset> ilk 1024 baytta olmalı; yoksa tarayıcı yanlış kodlamayla
   // ayrıştırmaya başlayıp Türkçe karakterleri bozabilir.
   const charsetMatch = html.match(/<meta[^>]+charset\s*=\s*["']?([\w-]+)/i);
-  const charsetBytePos = charsetMatch ? Buffer.byteLength(html.slice(0, charsetMatch.index), 'utf8') : null;
+  const charsetBytePos = charsetMatch ? utf8Bytes(html.slice(0, charsetMatch.index)) : null;
   const headerCharset = /charset=([\w-]+)/i.exec(headers['content-type'] ?? '')?.[1] ?? null;
 
   return {
@@ -420,6 +420,7 @@ function parsePerf($, pageUrl, html) {
 
   const pageHost = hostOf(pageUrl);
   const thirdPartyOrigins = new Set();
+  const thirdPartyScripts = [];
   const insecureResources = [];
   $('script[src], link[href], img[src], iframe[src], source[src], audio[src], video[src]').each((_, el) => {
     const $el = $(el);
@@ -429,14 +430,17 @@ function parsePerf($, pageUrl, html) {
     if (abs.startsWith('http://')) insecureResources.push({ tag: el.tagName, url: abs });
     if (el.tagName === 'script') {
       const h = hostOf(abs);
-      if (h && h !== pageHost) thirdPartyOrigins.add(h);
+      if (h && h !== pageHost) {
+        thirdPartyOrigins.add(h);
+        thirdPartyScripts.push({ src: abs, host: h, integrity: $el.attr('integrity') ?? null });
+      }
     }
   });
 
   let inlineStyleBytes = 0;
-  $('style').each((_, el) => { inlineStyleBytes += Buffer.byteLength($(el).text(), 'utf8'); });
+  $('style').each((_, el) => { inlineStyleBytes += utf8Bytes($(el).text()); });
   let scriptBytes = 0;
-  $('script').each((_, el) => { scriptBytes += Buffer.byteLength($(el).text(), 'utf8'); });
+  $('script').each((_, el) => { scriptBytes += utf8Bytes($(el).text()); });
 
   // Yazı tipi yükleme davranışı
   const fontLinks = [];
@@ -463,6 +467,7 @@ function parsePerf($, pageUrl, html) {
     preconnects,
     insecureResources,
     thirdPartyOrigins: [...thirdPartyOrigins],
+    thirdPartyScripts,
     inlineStyleBytes,
     scriptBytes,
     fontLinks,

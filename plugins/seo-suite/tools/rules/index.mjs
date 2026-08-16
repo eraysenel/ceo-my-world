@@ -15,9 +15,10 @@ import i18n from './i18n.mjs';
 import aiSearch from './ai-search.mjs';
 import links from './links.mjs';
 import media from './media.mjs';
+import security from './security.mjs';
 
 export const registry = buildRegistry([
-  technical, onpage, structuredData, performance, i18n, aiSearch, links, media
+  technical, onpage, structuredData, performance, i18n, aiSearch, links, media, security
 ]);
 
 export default registry;
